@@ -1,0 +1,1 @@
+include ':app', ':treasure', ':treasure-compiler'

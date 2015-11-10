@@ -1,0 +1,18 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+configurations {
+    provided
+}
+
+sourceSets.main.compileClasspath += [configurations.provided]
+
+idea {
+    module{
+        scopes.PROVIDED.plus += [configurations.provided]
+    }
+}
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    provided 'com.google.android:android:+'
+}
