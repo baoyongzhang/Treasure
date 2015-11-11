@@ -21,12 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.baoyz.treasure.conveter;
+package com.baoyz.treasure.compiler.conveter;
+
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Created by baoyz on 15/11/10.
  */
 public interface ValueConverter {
 
-
+    String convert(TypeMirror type, String value);
 }

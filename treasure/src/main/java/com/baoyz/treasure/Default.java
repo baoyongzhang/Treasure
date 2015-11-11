@@ -36,5 +36,5 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Target(METHOD)
 public @interface Default {
 
-    String value();
+    String[] value();
 }

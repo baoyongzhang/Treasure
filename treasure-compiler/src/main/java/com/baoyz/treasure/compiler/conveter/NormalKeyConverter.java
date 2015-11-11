@@ -21,18 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.baoyz.treasure.conveter;
+package com.baoyz.treasure.compiler.conveter;
 
 /**
  * Created by baoyz on 15/11/10.
  */
-public class NormalKeyConverter implements KeyConverter {
+public class NormalKeyConverter implements com.baoyz.treasure.conveter.KeyConverter {
 
     @Override
     public String convert(String key) {
         if (key != null && (key.startsWith("set") || key.startsWith("get"))) {
-            return key.substring(3);
+            return key.substring(3).toLowerCase();
         }
-        return key;
+        return key.toLowerCase();
     }
 }

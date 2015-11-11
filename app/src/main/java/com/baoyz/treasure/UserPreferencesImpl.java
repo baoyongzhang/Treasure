@@ -22,5 +22,21 @@ public class UserPreferencesImpl implements UserPreferences {
     @Override
     public void setUsername(String username) {
         mPreferences.edit().putString("username", username).apply();
+
+    }
+
+    @Override
+    public int getUserId() {
+        return 0;
+    }
+
+    @Override
+    public void setUserId(int id) {
+
+    }
+
+    @Override
+    public void clear() {
+        mPreferences.edit().clear().apply();
     }
 }

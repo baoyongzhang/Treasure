@@ -21,12 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.baoyz.treasure.conveter;
+package com.baoyz.treasure.compiler.conveter;
+
+import com.baoyz.treasure.compiler.TypeMethods;
+
+import javax.lang.model.type.TypeMirror;
 
 /**
- * Created by baoyz on 15/11/10.
+ * Created by baoyz on 15/11/11.
  */
-public interface KeyConverter {
+public class NormalValueConverter implements ValueConverter {
 
-    String convert(String key);
+    @Override
+    public String convert(TypeMirror type, String value) {
+        switch (TypeMethods.typeName(type)) {
+            case TypeMethods.INT:
+                return value;
+            case TypeMethods.FLOAT:
+                return value + "f";
+            case TypeMethods.LONG:
+                return value;
+            case TypeMethods.BOOLEAN:
+                return value;
+            case TypeMethods.STRING:
+        }
+        return null;
+    }
 }

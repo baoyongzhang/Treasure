@@ -21,25 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.baoyz.treasure;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.CLASS;
+package com.baoyz.treasure.compiler.conveter;
 
 /**
  * Created by baoyz on 15/11/10.
  */
-@Retention(CLASS)
-@Target(TYPE)
-public @interface Preferences {
+public interface KeyConverter {
 
-    String name() default "";
-    Edit edit() default Edit.APPLY;
-
-    public enum Edit {
-        COMMIT, APPLY
-    }
+    String convert(String key);
 }

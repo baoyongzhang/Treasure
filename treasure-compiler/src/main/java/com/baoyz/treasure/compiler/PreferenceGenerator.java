@@ -23,10 +23,13 @@
  */
 package com.baoyz.treasure.compiler;
 
+import com.baoyz.treasure.Apply;
+import com.baoyz.treasure.Clear;
+import com.baoyz.treasure.Commit;
 import com.baoyz.treasure.Preferences;
 import com.baoyz.treasure.Treasure;
-import com.baoyz.treasure.conveter.KeyConverter;
-import com.baoyz.treasure.conveter.NormalKeyConverter;
+import com.baoyz.treasure.compiler.conveter.KeyConverter;
+import com.baoyz.treasure.compiler.conveter.NormalKeyConverter;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -39,7 +42,6 @@ import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -61,6 +63,8 @@ public class PreferenceGenerator extends FilerGenerator {
     public TypeSpec onCreateTypeSpec(TypeElement element, String packageName, String className) {
 
         Preferences preferences = element.getAnnotation(Preferences.class);
+        Preferences.Edit edit = preferences.edit();
+        String editMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
 
         String fileName = "".equals(preferences.name()) ? className.toLowerCase() : preferences.name();
 
@@ -72,7 +76,7 @@ public class PreferenceGenerator extends FilerGenerator {
         MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
-                .addStatement("mPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE);", fileName)
+                .addStatement("mPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE)", fileName)
                 .build();
 
         builder.addMethod(constructor);
@@ -82,59 +86,65 @@ public class PreferenceGenerator extends FilerGenerator {
         List<? extends Element> enclosedElements = element.getEnclosedElements();
         for (Element e : enclosedElements) {
             if (e instanceof ExecutableElement) {
-                ExecutableElement ee = (ExecutableElement) e;
+                ExecutableElement methodElement = (ExecutableElement) e;
 
-                // TODO return value?
-                boolean isVoid = false;
-                if (ee.getReturnType().getKind().equals(VOID)) {
-                    isVoid = true;
-                }
-                String methodName = ee.getSimpleName().toString();
+                String methodName = methodElement.getSimpleName().toString();
+                TypeMirror returnType = methodElement.getReturnType();
                 MethodSpec.Builder methodBuilder = MethodSpec
                         .methodBuilder(methodName)
                         .addModifiers(Modifier.PUBLIC)
-                        .returns(TypeName.get(ee.getReturnType()));
+                        .returns(TypeName.get(returnType));
 
                 // throw exception
-                if (ee.getThrownTypes() != null && ee.getThrownTypes().size() > 0) {
+                if (methodElement.getThrownTypes() != null && methodElement.getThrownTypes().size() > 0) {
                     List<TypeName> exceptions = new ArrayList<>();
-                    for (TypeMirror type : ee.getThrownTypes()) {
+                    for (TypeMirror type : methodElement.getThrownTypes()) {
                         TypeName typeName = TypeName.get(type);
                         exceptions.add(typeName);
                     }
                     methodBuilder.addExceptions(exceptions);
                 }
 
-                String key = mKeyConverter.convert(methodName);
-                if (isVoid) {
-                    // setter
-                    List<? extends VariableElement> parameters = ee.getParameters();
-                    if (parameters == null || parameters.size() < 1) {
-                        throw new RuntimeException("The method must have a return value or parameter");
-                    }
-                    VariableElement param = parameters.get(0);
-                    String value = param.getSimpleName().toString();
-                    methodBuilder.addParameter(TypeName.get(param.asType()), value);
-                    methodBuilder.addStatement("mPreferences.edit().putString($S, $L).apply()", key, value);
-                } else {
-                    // getter
-                    String defaultVal = "";
-                    methodBuilder.addStatement("return mPreferences.getString($S, $S)", defaultVal);
+                if (methodElement.getAnnotation(Commit.class) != null) {
+                    editMethod = "commit";
+                } else if (methodElement.getAnnotation(Apply.class) != null) {
+                    editMethod = "apply";
                 }
 
-                /**
-    @Override
-    public String getUsername() {
-        return mPreferences.getString("username", null);
-    }
+                if (methodElement.getAnnotation(Clear.class) != null) {
+                    // clear preferences
+                    methodBuilder.addStatement("mPreferences.edit().clear().$L()", editMethod);
+                } else {
 
-                 @Override
-                 public void setUsername(String username) {
-                    mPreferences.edit().putString("username", username).apply();
-                 }
+                    /**
+                     *
+                     mPreferences.getAll();
+                     mPreferences.getBoolean();
+                     mPreferences.getFloat();
+                     mPreferences.getInt();
+                     mPreferences.getLong();
+                     mPreferences.getString();
+                     mPreferences.getStringSet();
+                     */
 
-                 */
+                    String key = mKeyConverter.convert(methodName);
+                    if (returnType.getKind().equals(VOID)) {
+                        // setter
+                        List<? extends VariableElement> parameters = methodElement.getParameters();
+                        if (parameters == null || parameters.size() < 1) {
+                            throw new RuntimeException("The method must have a return value or parameter");
+                        }
+                        VariableElement param = parameters.get(0);
+                        String value = param.getSimpleName().toString();
+                        methodBuilder.addParameter(TypeName.get(param.asType()), value);
 
+                        methodBuilder.addStatement("mPreferences.edit().$L($S, $L).$L()", TypeMethods.setterMethod(param.asType()), key, value, editMethod);
+                    } else {
+                        // getter
+                        String defaultVal = "";
+                        methodBuilder.addStatement("return mPreferences.$L($S, $L)", TypeMethods.getterMethod(returnType), key, defaultVal);
+                    }
+                }
 
                 builder.addMethod(methodBuilder.build());
 
