@@ -73,7 +73,7 @@ public class PreferenceGenerator extends FilerGenerator {
 
         String fileName = "".equals(preferences.name()) ? className.toLowerCase() : preferences.name();
 
-        TypeSpec.Builder builder = TypeSpec.classBuilder(className + Treasure.PREFERENCS_SUFFIX)
+        TypeSpec.Builder builder = TypeSpec.classBuilder(className + Treasure.PREFERENCES_SUFFIX)
                 .addSuperinterface(ClassName.get(packageName, className))
                 .addField(ClassName.get("android.content", "SharedPreferences"), "mPreferences", Modifier.PRIVATE)
                 .addModifiers(Modifier.PUBLIC);
