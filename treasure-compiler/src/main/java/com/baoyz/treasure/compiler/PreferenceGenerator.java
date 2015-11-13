@@ -28,6 +28,7 @@ import com.baoyz.treasure.Clear;
 import com.baoyz.treasure.Commit;
 import com.baoyz.treasure.Default;
 import com.baoyz.treasure.Preferences;
+import com.baoyz.treasure.Remove;
 import com.baoyz.treasure.Treasure;
 import com.baoyz.treasure.compiler.conveter.KeyConverter;
 import com.baoyz.treasure.compiler.conveter.SimpleKeyConverter;
@@ -69,7 +70,6 @@ public class PreferenceGenerator extends FilerGenerator {
 
         Preferences preferences = element.getAnnotation(Preferences.class);
         Preferences.Edit edit = preferences.edit();
-        String editMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
 
         String fileName = "".equals(preferences.name()) ? className.toLowerCase() : preferences.name();
 
@@ -91,6 +91,8 @@ public class PreferenceGenerator extends FilerGenerator {
         List<? extends Element> enclosedElements = element.getEnclosedElements();
         for (Element e : enclosedElements) {
             if (e instanceof ExecutableElement) {
+                String editMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
+
                 ExecutableElement methodElement = (ExecutableElement) e;
 
                 String methodName = methodElement.getSimpleName().toString();
@@ -119,6 +121,20 @@ public class PreferenceGenerator extends FilerGenerator {
                 if (methodElement.getAnnotation(Clear.class) != null) {
                     // clear preferences
                     methodBuilder.addStatement("mPreferences.edit().clear().$L()", editMethod);
+                } else if (methodElement.getAnnotation(Remove.class) != null) {
+                    List<? extends VariableElement> parameters = methodElement.getParameters();
+                    if (parameters == null || parameters.size() < 1) {
+                        throw new RuntimeException("The remove method must have a String parameter as key.");
+                    }
+                    boolean isReturn = false;
+                    if (returnType.getKind().equals(BOOLEAN)) {
+                        editMethod = "commit";
+                        isReturn = true;
+                    }
+                    VariableElement param = parameters.get(0);
+                    String key = param.getSimpleName().toString();
+                    methodBuilder.addParameter(TypeName.get(param.asType()), key);
+                    methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().remove($L).$L()", key, editMethod);
                 } else {
 
                     /**
