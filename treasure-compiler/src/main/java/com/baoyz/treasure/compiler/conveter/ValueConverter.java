@@ -30,5 +30,5 @@ import javax.lang.model.type.TypeMirror;
  */
 public interface ValueConverter {
 
-    String convert(TypeMirror type, String value);
+    String convert(TypeMirror type, String[] value);
 }

@@ -56,8 +56,8 @@ public class TypeMethods {
             put("float", FLOAT);
             put("boolean", BOOLEAN);
             put("java.lang.String", STRING);
-            put("java.util.Set", STRINGSET);
-            put("java.util.Map", ALL);
+            put("java.util.Set<java.lang.String>", STRINGSET);
+            put("java.util.Map<String, ?>", ALL);
         }
     };
 

@@ -26,10 +26,13 @@ package com.baoyz.treasure.compiler;
 import com.baoyz.treasure.Apply;
 import com.baoyz.treasure.Clear;
 import com.baoyz.treasure.Commit;
+import com.baoyz.treasure.Default;
 import com.baoyz.treasure.Preferences;
 import com.baoyz.treasure.Treasure;
 import com.baoyz.treasure.compiler.conveter.KeyConverter;
-import com.baoyz.treasure.compiler.conveter.NormalKeyConverter;
+import com.baoyz.treasure.compiler.conveter.SimpleKeyConverter;
+import com.baoyz.treasure.compiler.conveter.SimpleValueConverter;
+import com.baoyz.treasure.compiler.conveter.ValueConverter;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -46,6 +49,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
+import static javax.lang.model.type.TypeKind.BOOLEAN;
 import static javax.lang.model.type.TypeKind.VOID;
 
 /**
@@ -53,7 +57,8 @@ import static javax.lang.model.type.TypeKind.VOID;
  */
 public class PreferenceGenerator extends FilerGenerator {
 
-    KeyConverter mKeyConverter = new NormalKeyConverter();
+    KeyConverter mKeyConverter = new SimpleKeyConverter();
+    ValueConverter mValueConverter = new SimpleValueConverter();
 
     public PreferenceGenerator(Filer filer) {
         super(filer);
@@ -127,22 +132,32 @@ public class PreferenceGenerator extends FilerGenerator {
                      mPreferences.getStringSet();
                      */
 
+                    List<? extends VariableElement> parameters = methodElement.getParameters();
+
                     String key = mKeyConverter.convert(methodName);
-                    if (returnType.getKind().equals(VOID)) {
+                    if (returnType.getKind().equals(VOID) || (returnType.getKind().equals(BOOLEAN) && parameters != null && parameters.size() > 0)) {
                         // setter
-                        List<? extends VariableElement> parameters = methodElement.getParameters();
-                        if (parameters == null || parameters.size() < 1) {
+                        boolean isReturn = false;
+                        if (!returnType.getKind().equals(VOID)) {
+                            // the method return value is boolean and not have parameter, that edit mode is commit.
+                            editMethod = "commit";
+                            isReturn = true;
+                        } else if (parameters == null || parameters.size() < 1) {
                             throw new RuntimeException("The method must have a return value or parameter");
                         }
                         VariableElement param = parameters.get(0);
                         String value = param.getSimpleName().toString();
                         methodBuilder.addParameter(TypeName.get(param.asType()), value);
 
-                        methodBuilder.addStatement("mPreferences.edit().$L($S, $L).$L()", TypeMethods.setterMethod(param.asType()), key, value, editMethod);
+                        methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", TypeMethods.setterMethod(param.asType()), key, value, editMethod);
                     } else {
                         // getter
-                        String defaultVal = "";
-                        methodBuilder.addStatement("return mPreferences.$L($S, $L)", TypeMethods.getterMethod(returnType), key, defaultVal);
+                        String[] defaultVal = null;
+                        final Default annotation = methodElement.getAnnotation(Default.class);
+                        if (annotation != null) {
+                            defaultVal = annotation.value();
+                        }
+                        methodBuilder.addStatement("return mPreferences.$L($S, $L)", TypeMethods.getterMethod(returnType), key, mValueConverter.convert(returnType, defaultVal));
                     }
                 }
 
