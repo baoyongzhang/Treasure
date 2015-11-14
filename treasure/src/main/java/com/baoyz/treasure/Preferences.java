@@ -39,7 +39,7 @@ public @interface Preferences {
     String name() default "";
     Edit edit() default Edit.APPLY;
 
-    public enum Edit {
+    enum Edit {
         COMMIT, APPLY
     }
 }

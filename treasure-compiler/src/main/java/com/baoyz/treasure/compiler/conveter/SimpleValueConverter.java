@@ -49,7 +49,7 @@ public class SimpleValueConverter implements ValueConverter {
             case TypeMethods.BOOLEAN:
                 return isDefault ? "false" : value[0];
             case TypeMethods.STRING:
-                return isDefault ? null : value[0];
+                return isDefault ? null : "\"" + value[0] + "\"";
             case TypeMethods.STRINGSET:
                 if (isDefault)
                     return null;

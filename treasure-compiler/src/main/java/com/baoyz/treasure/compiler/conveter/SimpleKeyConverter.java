@@ -33,6 +33,9 @@ public class SimpleKeyConverter implements KeyConverter {
         if (key != null && (key.startsWith("set") || key.startsWith("get") || key.startsWith("put"))) {
             return key.substring(3).toLowerCase();
         }
+        if (key != null && key.startsWith("is")) {
+            return key.substring(2).toLowerCase();
+        }
         return key.toLowerCase();
     }
 }
