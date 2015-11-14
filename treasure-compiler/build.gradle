@@ -5,3 +5,5 @@ dependencies {
     compile project(':treasure')
     compile 'com.squareup:javapoet:1.1.0'
 }
+
+apply from: rootProject.file('gradle/gradle-jcenter-push.gradle')

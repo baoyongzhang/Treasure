@@ -16,3 +16,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     provided 'com.google.android:android:+'
 }
+
+apply from: rootProject.file('gradle/gradle-jcenter-push.gradle')
