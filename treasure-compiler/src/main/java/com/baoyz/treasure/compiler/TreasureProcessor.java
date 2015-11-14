@@ -66,6 +66,8 @@ public class TreasureProcessor extends AbstractProcessor {
                     generator.generate();
                 }
             }
+            FinderGenerator finderGenerator = new FinderGenerator(mFiler, set);
+            finderGenerator.generate();
         } catch (Exception e) {
             e.printStackTrace();
         }

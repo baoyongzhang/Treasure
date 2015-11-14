@@ -40,7 +40,9 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
@@ -56,7 +58,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 /**
  * Created by baoyz on 15/11/10.
  */
-public class PreferenceGenerator extends FilerGenerator {
+public class PreferenceGenerator extends ElementGenerator {
 
     KeyConverter mKeyConverter = new SimpleKeyConverter();
     ValueConverter mValueConverter = new SimpleValueConverter();
@@ -104,7 +106,13 @@ public class PreferenceGenerator extends FilerGenerator {
                 ExecutableElement methodElement = (ExecutableElement) e;
 
                 String methodName = methodElement.getSimpleName().toString();
+
+                if (methodName.equals("<init>")) {
+                    continue;
+                }
+
                 TypeMirror returnType = methodElement.getReturnType();
+
                 MethodSpec.Builder methodBuilder = MethodSpec
                         .methodBuilder(methodName)
                         .addModifiers(Modifier.PUBLIC)

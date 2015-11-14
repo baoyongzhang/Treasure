@@ -66,7 +66,6 @@ public class TypeMethods {
     }
 
     public static String getterMethod(TypeMirror type) {
-        System.out.println(type.toString());
         String method = METHOD_MAP.get(type.toString());
         if (method != null) {
             return "get" + method;

@@ -32,12 +32,12 @@ import javax.lang.model.element.TypeElement;
 /**
  * Created by baoyz on 15/10/28.
  */
-public abstract class FilerGenerator implements Generator {
+public abstract class ElementGenerator implements Generator {
 
     private Filer mFiler;
     private TypeElement mElement;
 
-    public FilerGenerator(Filer filer) {
+    public ElementGenerator(Filer filer) {
         mFiler = filer;
     }
 
@@ -58,7 +58,5 @@ public abstract class FilerGenerator implements Generator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        System.out.println(javaFile);
     }
 }

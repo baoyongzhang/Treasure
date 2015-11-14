@@ -12,6 +12,11 @@ idea {
         scopes.PROVIDED.plus += [configurations.provided]
     }
 }
+
+jar {
+    exclude 'com/baoyz/treasure/PreferencesFinder*'
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     provided 'com.google.android:android:+'

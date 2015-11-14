@@ -25,8 +25,6 @@ package com.baoyz.treasure;
 
 import android.content.Context;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
 /**
@@ -54,29 +52,11 @@ public class Treasure {
         if (value != null) {
             return value;
         }
-        try {
-            final Constructor<?> constructor;
-            if (id == null) {
-                constructor = Class.forName(getPreferencesClassName(interfaceClass)).getConstructor(Context.class);
-                value = (T) constructor.newInstance(context);
-            } else {
-                constructor = Class.forName(getPreferencesClassName(interfaceClass)).getConstructor(Context.class, String.class);
-                value = (T) constructor.newInstance(context, id);
-            }
-            if (value != null) {
-                mPreferencesCache.put(key, value);
-                return value;
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+        final Object obj = PreferencesFinder.get(context, getPreferencesClassName(interfaceClass), id);
+        if (obj != null) {
+            value = (T) obj;
+            mPreferencesCache.put(key, value);
+            return value;
         }
         return null;
     }

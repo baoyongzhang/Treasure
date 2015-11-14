@@ -101,7 +101,7 @@ void setUsername(String username);
 boolean setUsername(String username);
 ```
 
-无论上面两种方式有没有设置，只有`set`方法的返回值是`boolean`，那么这个方法就会以`commit()`方法提交，并且返回`commit()`的结果。
+无论上面两种方式有没有设置，只要`set`方法的返回值是`boolean`，那么这个方法就会以`commit()`方法提交，并且返回`commit()`的结果。
 
 #### 移除数据
 
