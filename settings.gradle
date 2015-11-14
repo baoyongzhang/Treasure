@@ -1,1 +1,1 @@
-include ':app', ':treasure', ':treasure-compiler'
+include ':demo', ':treasure', ':treasure-compiler'
