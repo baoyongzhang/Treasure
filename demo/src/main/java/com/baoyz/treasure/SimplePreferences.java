@@ -53,6 +53,13 @@ public interface SimplePreferences {
     // if return boolean, that call edit().commit() and return this commit result.
     boolean setStringSet(Set<String> stringSet);
 
+    @Commit
+    @Remove
+    void removeUsername();
+
+    @Remove
+    boolean deleteTimeout();
+
     @Clear
     void clear();
 }

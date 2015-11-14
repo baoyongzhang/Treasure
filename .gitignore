@@ -21,7 +21,7 @@ bin/
 gen/
 
 # Local configuration file (sdk path, etc)
-*.properties
+local.properties
 
 ### Linux
 #########

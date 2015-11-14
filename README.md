@@ -13,7 +13,7 @@ public interface SimplePreferences {
     String getUsername();
 
     void setUsername(String username);
-  
+
 }
 
 ```
@@ -92,6 +92,18 @@ boolean setUsername(String username);
 
 无论上面两种方式有没有设置，只有`set`方法的返回值是`boolean`，那么这个方法就会以`commit()`方法提交，并且返回`commit()`的结果。
 
+#### 移除数据
+
+``` java
+@Remove
+void removeUsername();
+
+@Remove
+void deleteTimeout();
+```
+
+使用`@Remove`注解修饰方法，调用方法移除对应`key`的数据。
+
 #### 清空数据
 
 ``` java
@@ -103,7 +115,7 @@ void clear();
 
 #### 关于方法名
 
-如果方法名以`get`、`set`、`put`或者`is`开头，那么会忽略这些前缀并且全部小写作为`key`，如果不包含这些前缀，那么方法名全部小写会作为`key`。
+如果方法名以`get`、`set`、`put`、`is`、`remove`、`delete`开头，那么会忽略这些前缀并且全部小写作为`key`，如果不包含这些前缀，那么方法名全部小写会作为`key`。
 
 ### Gradle
 

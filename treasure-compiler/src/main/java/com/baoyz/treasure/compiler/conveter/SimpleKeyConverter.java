@@ -36,6 +36,9 @@ public class SimpleKeyConverter implements KeyConverter {
         if (key != null && key.startsWith("is")) {
             return key.substring(2).toLowerCase();
         }
+        if (key != null && (key.startsWith("remove") || key.startsWith("delete"))){
+            return key.substring(6).toLowerCase();
+        }
         return key.toLowerCase();
     }
 }
