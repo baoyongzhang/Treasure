@@ -84,7 +84,15 @@ public class PreferenceGenerator extends FilerGenerator {
                 .addStatement("mPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE)", fileName)
                 .build();
 
+        MethodSpec constructor2 = MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(ClassName.get("android.content", "Context"), "context")
+                .addParameter(ClassName.get(String.class), "id")
+                .addStatement("mPreferences = context.getSharedPreferences($S + \"_\" + id, Context.MODE_PRIVATE)", fileName)
+                .build();
+
         builder.addMethod(constructor);
+        builder.addMethod(constructor2);
 
         // implements
         // implements extension method

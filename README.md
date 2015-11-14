@@ -32,6 +32,17 @@ preferences.getUsername(); // return "Hello Treasure!"
 
 ## 高级用法
 
+#### 多文件
+
+可以为一个`Preferences`生成多个文件，例如多账号管理，不同账号有不同`Preferences`。
+
+``` java
+Treasure.get(context, SimplePreferences.class, "id_one");
+Treasure.get(context, SimplePreferences.class, "id_two");
+```
+
+`Treasure`提供了一个重载的`get`方法，可以传入一个`String`类型的ID，不同ID返回的`Preferences`对象不同，保存的文件也不同。（感谢好基友[zzz40500](https://github.com/zzz40500)提出的建议）
+
 #### 默认值
 
 `@Default`注解可以指定`get`方法的默认值。

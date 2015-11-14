@@ -36,22 +36,35 @@ public class Treasure {
 
     public static final String PREFERENCES_SUFFIX = "$$Preferences";
 
-    private static HashMap<Class<?>, Object> mPreferencesCache;
+    private static HashMap<Key, Object> mPreferencesCache;
 
     static {
         mPreferencesCache = new HashMap();
     }
 
     public static <T> T get(Context context, Class<T> interfaceClass) {
-        T value = (T) mPreferencesCache.get(interfaceClass);
+        return get(context, interfaceClass, null);
+    }
+
+    public static <T> T get(Context context, Class<T> interfaceClass, String id) {
+        Key key = new Key();
+        key.interfaceClass = interfaceClass;
+        key.id = id;
+        T value = (T) mPreferencesCache.get(key);
         if (value != null) {
             return value;
         }
         try {
-            final Constructor<?> constructor = Class.forName(getPreferencesClassName(interfaceClass)).getConstructor(Context.class);
-            value = (T) constructor.newInstance(context);
+            final Constructor<?> constructor;
+            if (id == null) {
+                constructor = Class.forName(getPreferencesClassName(interfaceClass)).getConstructor(Context.class);
+                value = (T) constructor.newInstance(context);
+            } else {
+                constructor = Class.forName(getPreferencesClassName(interfaceClass)).getConstructor(Context.class, String.class);
+                value = (T) constructor.newInstance(context, id);
+            }
             if (value != null) {
-                mPreferencesCache.put(interfaceClass, value);
+                mPreferencesCache.put(key, value);
                 return value;
             }
         } catch (ClassNotFoundException e) {
@@ -71,5 +84,30 @@ public class Treasure {
     private static String getPreferencesClassName(Class interfaceClass) {
         final String interfaceName = interfaceClass.getCanonicalName();
         return interfaceName + PREFERENCES_SUFFIX;
+    }
+
+    static class Key {
+        Class<?> interfaceClass;
+        String id;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Key key = (Key) o;
+
+            if (interfaceClass != null ? !interfaceClass.equals(key.interfaceClass) : key.interfaceClass != null)
+                return false;
+            return !(id != null ? !id.equals(key.id) : key.id != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = interfaceClass != null ? interfaceClass.hashCode() : 0;
+            result = 31 * result + (id != null ? id.hashCode() : 0);
+            return result;
+        }
     }
 }
