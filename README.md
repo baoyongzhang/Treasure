@@ -1,6 +1,6 @@
 # Treasure
 
-`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。不仅使用方便而且性能和原生写法机会无差别。
+`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。不仅使用方便而且性能和原生写法几乎无差别。
 
 ## 使用方法
 
@@ -18,7 +18,7 @@ public interface SimplePreferences {
 
 ```
 
-我们定义了一个`interface`，需要使用`@Preferences`注解进行声明。然后可以定义一些列的`get`、`set`方法，用于获取和设置值。方法名会作为存储的`key`，例如`getUsername()`和`setUsername()`的`key`就是`username`，也就是通过`setUsername()`设置的`value`可以通过`getUsername()`获取到，因为他们的`key`是一样的。
+我们定义了一个`interface`，需要使用`@Preferences`注解进行声明。然后可以定义一系列的`get`、`set`方法，用于获取和设置值。方法名会作为存储的`key`，例如`getUsername()`和`setUsername()`的`key`就是`username`，也就是通过`setUsername()`设置的`value`可以通过`getUsername()`获取到，因为他们的`key`是一样的。
 
 ##### 2、实例化
 
