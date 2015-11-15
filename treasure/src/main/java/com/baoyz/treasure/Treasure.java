@@ -52,18 +52,13 @@ public class Treasure {
         if (value != null) {
             return value;
         }
-        final Object obj = PreferencesFinder.get(context, getPreferencesClassName(interfaceClass), id);
+        final Object obj = PreferencesFinder.get(context, interfaceClass, id);
         if (obj != null) {
             value = (T) obj;
             mPreferencesCache.put(key, value);
             return value;
         }
         return null;
-    }
-
-    private static String getPreferencesClassName(Class interfaceClass) {
-        final String interfaceName = interfaceClass.getCanonicalName();
-        return interfaceName + PREFERENCES_SUFFIX;
     }
 
     static class Key {

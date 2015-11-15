@@ -78,7 +78,8 @@ public class PreferenceGenerator extends ElementGenerator {
         TypeSpec.Builder builder = TypeSpec.classBuilder(className + Treasure.PREFERENCES_SUFFIX)
                 .addSuperinterface(ClassName.get(packageName, className))
                 .addField(ClassName.get("android.content", "SharedPreferences"), "mPreferences", Modifier.PRIVATE)
-                .addModifiers(Modifier.PUBLIC);
+                .addModifiers(Modifier.PUBLIC)
+                .addJavadoc("Generated code from Treasure. Do not modify!");
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)

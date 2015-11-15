@@ -54,7 +54,8 @@ public class FinderGenerator implements Generator {
     @Override
     public void generate() {
         TypeSpec.Builder builder = TypeSpec.classBuilder("PreferencesFinder")
-                .addModifiers(Modifier.PUBLIC);
+                .addModifiers(Modifier.PUBLIC)
+                .addJavadoc("Generated code from Treasure. Do not modify!");
 
         /**
          if (name.equals($S)) {
@@ -71,7 +72,7 @@ public class FinderGenerator implements Generator {
                 .addModifiers(Modifier.STATIC, Modifier.PUBLIC)
                 .returns(TypeName.OBJECT)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
-                .addParameter(ClassName.get(String.class), "name")
+                .addParameter(ClassName.get(Class.class), "clazz")
                 .addParameter(ClassName.get(String.class), "id");
 
         for (Element element : mSet) {
@@ -81,7 +82,7 @@ public class FinderGenerator implements Generator {
                 final String packageName = name.substring(0, name.lastIndexOf("."));
                 final String className = name.substring(packageName.length() + 1);
                 final ClassName classType = ClassName.get(packageName, className);
-                getMethodBuilder.beginControlFlow("if (name.equals($S))", name)
+                getMethodBuilder.beginControlFlow("if (clazz.isAssignableFrom($T.class))", ClassName.get(packageName, className))
                         .beginControlFlow("if (id == null)")
                         .addStatement("return new $T(context)", classType)
                         .nextControlFlow("else")

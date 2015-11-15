@@ -1,10 +1,21 @@
 # Treasure
 
-`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。不仅使用方便而且性能和原生写法几乎无差别。
+[ ![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) ](https://bintray.com/baoyongzhang/maven/Treasure/_latestVersion)
+
+`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。运行时0反射，不仅使用方便而且性能和原生写法几乎无差别。
 
 ## 使用方法
 
-##### 1、定义接口
+##### 1、添加依赖
+
+Gradle
+
+``` groovy
+compile 'com.baoyz.treasure:treasure:0.3.1'
+provided 'com.baoyz.treasure:treasure-compiler:0.3.1'
+```
+
+##### 2、定义接口
 
 ``` java
 @Preferences
@@ -20,7 +31,7 @@ public interface SimplePreferences {
 
 我们定义了一个`interface`，需要使用`@Preferences`注解进行声明。然后可以定义一系列的`get`、`set`方法，用于获取和设置值。方法名会作为存储的`key`，例如`getUsername()`和`setUsername()`的`key`就是`username`，也就是通过`setUsername()`设置的`value`可以通过`getUsername()`获取到，因为他们的`key`是一样的。
 
-##### 2、实例化
+##### 3、实例化
 
 ``` java
 SimplePreferences preferences = Treasure.get(context, SimplePreferences.class);
@@ -64,14 +75,14 @@ Set<String> getStringSet();
 
 如果没有指定`@Default`那么默认值见下表。
 
-| 返回值类型       | 默认值   |
-| ----------- | ----- |
-| int         | 0     |
-| float       | 0f    |
-| long        | 0l    |
-| boolean     | false |
-| String      | null  |
-| Set<String> | null  |
+| 返回值类型        | 默认值   |
+| ------------ | ----- |
+| int          | 0     |
+| float        | 0f    |
+| long         | 0l    |
+| boolean      | false |
+| String       | null  |
+| Set\<String> | null  |
 
 #### 提交类型
 
@@ -128,9 +139,9 @@ void clear();
 
 如果方法名以`get`、`set`、`put`、`is`、`remove`、`delete`开头，那么会忽略这些前缀并且全部小写作为`key`，如果不包含这些前缀，那么方法名全部小写会作为`key`。
 
-### Gradle
+#### 混淆
 
-审核通过后放出。
+`Treasure`运行时0反射，不需要添加混淆忽略配置。
 
 
 

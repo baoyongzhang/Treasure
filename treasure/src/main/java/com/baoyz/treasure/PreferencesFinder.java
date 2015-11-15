@@ -30,7 +30,7 @@ import android.content.Context;
  */
 public class PreferencesFinder {
 
-    public static Object get(Context context, String name, String id) {
+    public static Object get(Context context, Class<?> clazz, String id) {
         return null;
     }
 }
