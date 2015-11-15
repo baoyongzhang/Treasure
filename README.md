@@ -2,6 +2,8 @@
 
 [ ![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) ](https://bintray.com/baoyongzhang/maven/Treasure/_latestVersion)
 
+[English document](./README_EN.md)
+
 `Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。运行时0反射，不仅使用方便而且性能和原生写法几乎无差别。
 
 ## 使用方法
