@@ -28,4 +28,13 @@ package com.baoyz.treasure;
  */
 @Preferences
 public interface UserPreferences {
+
+    String getUsername();
+    boolean setUsername(String username);
+
+    boolean isLogin();
+    void setLogin(boolean login);
+
+    @Clear
+    void clear();
 }
