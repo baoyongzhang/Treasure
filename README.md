@@ -139,13 +139,15 @@ void clear();
 
 如果方法名以`get`、`set`、`put`、`is`、`remove`、`delete`开头，那么会忽略这些前缀并且全部小写作为`key`，如果不包含这些前缀，那么方法名全部小写会作为`key`。
 
-#### 混淆
+#### Proguard
 
-`Treasure`运行时0反射，不需要添加混淆忽略配置。
+`Treasure`运行时0反射，不需要添加`Proguard`配置。
 
 
 
 # 致谢
+
+[Favor](https://github.com/soarcn/Favor)（灵感来源）
 
 [javapoet](https://github.com/square/javapoet)
 
