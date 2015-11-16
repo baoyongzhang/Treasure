@@ -1,6 +1,6 @@
 # Treasure
 
-![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) 
+![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Treasure-green.svg?style=true)](https://android-arsenal.com/details/1/2787)
 
 `Treasure` is a wrapper library for Android SharePreferences , only you need to define the interface without write implementation code. Non-reflective, high-performance runtime.
 
@@ -170,4 +170,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
