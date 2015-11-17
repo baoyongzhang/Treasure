@@ -8,4 +8,6 @@ android:
   components:
     - build-tools-23.0.1
 
-script: ./gradlew assembleDebug
+script:
+	- ./gradlew :treasure:build
+	- ./gradlew :treasure-compiler:build
