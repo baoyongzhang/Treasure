@@ -9,5 +9,5 @@ android:
     - build-tools-23.0.1
 
 script:
-	- ./gradlew :treasure:build
-	- ./gradlew :treasure-compiler:build
+  - ./gradlew :treasure:build
+  - ./gradlew :treasure-compiler:build
