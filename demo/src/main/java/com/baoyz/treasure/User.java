@@ -23,10 +23,12 @@
  */
 package com.baoyz.treasure;
 
+import java.io.Serializable;
+
 /**
  * Created by baoyz on 15/11/21.
  */
-public class User {
+public class User implements Serializable {
 
     public String name;
     public int age;

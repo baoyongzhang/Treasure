@@ -4,7 +4,7 @@
 
 [English document](./README_EN.md)
 
-`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现。运行时0反射，不仅使用方便而且性能和原生写法几乎无差别。
+`Treasure`是一个Android平台上基于`SharePreferences`的偏好存储库，只需要定义接口，无需编写实现，默认支持`Serializable`和`Parcelable`。运行时0反射，不仅使用方便而且性能和原生写法几乎无差别。
 
 ## 使用方法
 
@@ -13,8 +13,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.3.1'
-provided 'com.baoyz.treasure:treasure-compiler:0.3.1'
+compile 'com.baoyz.treasure:treasure:0.4.0'
+provided 'com.baoyz.treasure:treasure-compiler:0.4.0'
 ```
 
 ##### 2、定义接口
@@ -136,6 +136,52 @@ void clear();
 ```
 
 可以声明一个方法，使用`@Clear`注解修饰，那么调用这个方法就会清空整个`Preferences`的数据。
+
+#### 对象序列化
+
+如果`interface`中声明的数据类型不是`SharePreferences`支持的，需要用到转换器，`Treasure`默认提供`Serializable`和`Parcelable`的支持。
+
+``` java
+// Serializable or Parcelable
+class User implements Serializable {...}
+
+// Preferences Interface
+void setUser(User user);
+User getUser();
+```
+
+可以自定义转换规则，例如用`Gson`将对象以`JSON`的形式保存。
+
+``` java
+public class GsonConverterFactory implements Converter.Factory {
+
+    @Override
+    public <F> Converter<F, String> fromType(Class<F> fromClass) {
+        return new Converter<F, String>() {
+            @Override
+            public String convert(F value) {
+                return new Gson().toJson(value);
+            }
+        };
+    }
+
+    @Override
+    public <T> Converter<String, T> toType(final Class<T> toClass) {
+        return new Converter<String, T>() {
+            @Override
+            public T convert(String value) {
+                return new Gson().fromJson(value, toClass);
+            }
+        };
+    }
+}
+```
+
+自定义之后，需要调用`Treasure.setConverterFactory()`方法设置自定义的转换规则。
+
+``` java
+Treasure.setConverterFactory(new GsonConverterFactory());
+```
 
 #### 关于方法名
 
