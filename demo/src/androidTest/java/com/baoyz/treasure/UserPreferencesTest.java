@@ -24,5 +24,15 @@ public class UserPreferencesTest extends ApplicationTestCase<Application> {
         userPreferences.clear();
         assertFalse(userPreferences.isLogin());
         assertNull(userPreferences.getUsername());
+        User user = new User();
+        user.name = "Mr.Bao";
+        user.age = 21;
+        userPreferences.setUser(user);
+        assertEquals(user, userPreferences.getUser());
+    }
+
+    public void testCustomGsonConverter() {
+        Treasure.setConverterFactory(new GsonConverterFactory());
+        testUserPreferences();
     }
 }

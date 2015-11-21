@@ -35,6 +35,9 @@ public interface UserPreferences {
     boolean isLogin();
     void setLogin(boolean login);
 
+    User getUser();
+    void setUser(User user);
+
     @Clear
     void clear();
 }

@@ -23,46 +23,30 @@
  */
 package com.baoyz.treasure;
 
-import java.util.Set;
+import com.google.gson.Gson;
 
 /**
- * Created by baoyz on 15/11/14.
+ * Created by baoyz on 15/11/21.
  */
-@Preferences
-public interface SimplePreferences {
+public class GsonConverterFactory implements Converter.Factory {
 
-    @Default("Hello Treasure!")
-    String getUsername();
+    @Override
+    public <F> Converter<F, String> fromType(Class<F> fromClass) {
+        return new Converter<F, String>() {
+            @Override
+            public String convert(F value) {
+                return new Gson().toJson(value);
+            }
+        };
+    }
 
-    @Commit
-    void setUsername(String username);
-
-    @Default("false")
-    boolean isLogin();
-    void setLogin(boolean login);
-
-    // default is 1 hour
-    @Default("1000 * 60 * 60")
-    long getTimeout();
-
-    void setTimeout(long timeout);
-
-    @Default({"hello", "world", "!"})
-    Set<String> getStringSet();
-
-    void setPerson(User obj);
-    User getPerson();
-
-    // if return boolean, that call edit().commit() and return this commit result.
-    boolean setStringSet(Set<String> stringSet);
-
-    @Commit
-    @Remove
-    void removeUsername();
-
-    @Remove
-    boolean deleteTimeout();
-
-    @Clear
-    void clear();
+    @Override
+    public <T> Converter<String, T> toType(final Class<T> toClass) {
+        return new Converter<String, T>() {
+            @Override
+            public T convert(String value) {
+                return new Gson().fromJson(value, toClass);
+            }
+        };
+    }
 }

@@ -23,46 +23,30 @@
  */
 package com.baoyz.treasure;
 
-import java.util.Set;
-
 /**
- * Created by baoyz on 15/11/14.
+ * Created by baoyz on 15/11/21.
  */
-@Preferences
-public interface SimplePreferences {
+public class User {
 
-    @Default("Hello Treasure!")
-    String getUsername();
+    public String name;
+    public int age;
 
-    @Commit
-    void setUsername(String username);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-    @Default("false")
-    boolean isLogin();
-    void setLogin(boolean login);
+        User person = (User) o;
 
-    // default is 1 hour
-    @Default("1000 * 60 * 60")
-    long getTimeout();
+        if (age != person.age) return false;
+        return !(name != null ? !name.equals(person.name) : person.name != null);
 
-    void setTimeout(long timeout);
+    }
 
-    @Default({"hello", "world", "!"})
-    Set<String> getStringSet();
-
-    void setPerson(User obj);
-    User getPerson();
-
-    // if return boolean, that call edit().commit() and return this commit result.
-    boolean setStringSet(Set<String> stringSet);
-
-    @Commit
-    @Remove
-    void removeUsername();
-
-    @Remove
-    boolean deleteTimeout();
-
-    @Clear
-    void clear();
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + age;
+        return result;
+    }
 }
