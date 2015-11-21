@@ -23,6 +23,7 @@
  */
 package com.baoyz.treasure.compiler;
 
+import com.baoyz.treasure.Converter;
 import com.baoyz.treasure.Treasure;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -73,7 +74,8 @@ public class FinderGenerator implements Generator {
                 .returns(TypeName.OBJECT)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
                 .addParameter(ClassName.get(Class.class), "clazz")
-                .addParameter(ClassName.get(String.class), "id");
+                .addParameter(ClassName.get(String.class), "id")
+                .addParameter(ClassName.get(Converter.Factory.class), "factory");
 
         for (Element element : mSet) {
             if (element instanceof TypeElement) {
@@ -84,9 +86,9 @@ public class FinderGenerator implements Generator {
                 final ClassName classType = ClassName.get(packageName, className);
                 getMethodBuilder.beginControlFlow("if (clazz.isAssignableFrom($T.class))", ClassName.get(packageName, className))
                         .beginControlFlow("if (id == null)")
-                        .addStatement("return new $T(context)", classType)
+                        .addStatement("return new $T(context, factory)", classType)
                         .nextControlFlow("else")
-                        .addCode("return new $T(context, id);", classType)
+                        .addCode("return new $T(context, factory, id);", classType)
                         .endControlFlow()
                         .endControlFlow();
             }

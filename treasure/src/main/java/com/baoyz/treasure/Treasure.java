@@ -34,10 +34,16 @@ public class Treasure {
 
     public static final String PREFERENCES_SUFFIX = "$$Preferences";
 
-    private static HashMap<Key, Object> mPreferencesCache;
+    private static HashMap<Key, Object> sPreferencesCache;
+    private static Converter.Factory sConverterFactory;
 
     static {
-        mPreferencesCache = new HashMap();
+        sPreferencesCache = new HashMap();
+        sConverterFactory = new SimpleConverterFactory();
+    }
+
+    public static void setConverterFactory(Converter.Factory factory) {
+        sConverterFactory = factory;
     }
 
     public static <T> T get(Context context, Class<T> interfaceClass) {
@@ -48,14 +54,14 @@ public class Treasure {
         Key key = new Key();
         key.interfaceClass = interfaceClass;
         key.id = id;
-        T value = (T) mPreferencesCache.get(key);
+        T value = (T) sPreferencesCache.get(key);
         if (value != null) {
             return value;
         }
-        final Object obj = PreferencesFinder.get(context, interfaceClass, id);
+        final Object obj = PreferencesFinder.get(context, interfaceClass, id, sConverterFactory);
         if (obj != null) {
             value = (T) obj;
-            mPreferencesCache.put(key, value);
+            sPreferencesCache.put(key, value);
             return value;
         }
         return null;

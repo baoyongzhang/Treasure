@@ -26,6 +26,7 @@ package com.baoyz.treasure.compiler;
 import com.baoyz.treasure.Apply;
 import com.baoyz.treasure.Clear;
 import com.baoyz.treasure.Commit;
+import com.baoyz.treasure.Converter;
 import com.baoyz.treasure.Default;
 import com.baoyz.treasure.Preferences;
 import com.baoyz.treasure.Remove;
@@ -36,6 +37,7 @@ import com.baoyz.treasure.compiler.conveter.SimpleValueConverter;
 import com.baoyz.treasure.compiler.conveter.ValueConverter;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
@@ -78,19 +80,24 @@ public class PreferenceGenerator extends ElementGenerator {
         TypeSpec.Builder builder = TypeSpec.classBuilder(className + Treasure.PREFERENCES_SUFFIX)
                 .addSuperinterface(ClassName.get(packageName, className))
                 .addField(ClassName.get("android.content", "SharedPreferences"), "mPreferences", Modifier.PRIVATE)
+                .addField(ClassName.get(Converter.Factory.class), "mConverterFactory", Modifier.PRIVATE)
                 .addModifiers(Modifier.PUBLIC)
                 .addJavadoc("Generated code from Treasure. Do not modify!");
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
+                .addParameter(ClassName.get(Converter.Factory.class), "converterFactory")
                 .addStatement("mPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE)", fileName)
+                .addStatement("mConverterFactory = converterFactory")
                 .build();
 
         MethodSpec constructor2 = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
+                .addParameter(ClassName.get(Converter.Factory.class), "converterFactory")
                 .addParameter(ClassName.get(String.class), "id")
+                .addStatement("mConverterFactory = converterFactory")
                 .addStatement("mPreferences = context.getSharedPreferences($S + \"_\" + id, Context.MODE_PRIVATE)", fileName)
                 .build();
 
@@ -114,10 +121,11 @@ public class PreferenceGenerator extends ElementGenerator {
 
                 TypeMirror returnType = methodElement.getReturnType();
 
+                final TypeName returnTypeName = TypeName.get(returnType);
                 MethodSpec.Builder methodBuilder = MethodSpec
                         .methodBuilder(methodName)
                         .addModifiers(Modifier.PUBLIC)
-                        .returns(TypeName.get(returnType));
+                        .returns(returnTypeName);
 
                 // throw exception
                 if (methodElement.getThrownTypes() != null && methodElement.getThrownTypes().size() > 0) {
@@ -176,9 +184,27 @@ public class PreferenceGenerator extends ElementGenerator {
                         }
                         VariableElement param = parameters.get(0);
                         String value = param.getSimpleName().toString();
-                        methodBuilder.addParameter(TypeName.get(param.asType()), value);
+                        final TypeName paramTypeName = TypeName.get(param.asType());
+                        methodBuilder.addParameter(paramTypeName, value);
 
-                        methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", TypeMethods.setterMethod(param.asType()), key, value, editMethod);
+                        String setterMethodName = TypeMethods.setterMethod(param.asType());
+                        if (setterMethodName == null) {
+                            // Object convert to String
+//                            if (mConverterFactory != null) {
+//                                Converter<?, String> converter = mConverterFactory.fromType(obj.getClass());
+//                                final String value = converter.convert(obj);
+//                            }
+                            setterMethodName = "putString";
+                            methodBuilder
+                                    .beginControlFlow("if (mConverterFactory == null) ")
+                                    .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
+                                    .endControlFlow()
+                                    .addStatement("$T converter = mConverterFactory.fromType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), paramTypeName, ClassName.get(String.class)), paramTypeName)
+                                    .addStatement("String value = converter.convert($L)", value)
+                                    .addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, value).$L()", setterMethodName, key, editMethod);
+                        } else {
+                            methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", setterMethodName, key, value, editMethod);
+                        }
                     } else {
                         // getter
                         String[] defaultVal = null;
@@ -186,7 +212,18 @@ public class PreferenceGenerator extends ElementGenerator {
                         if (annotation != null) {
                             defaultVal = annotation.value();
                         }
-                        methodBuilder.addStatement("return mPreferences.$L($S, $L)", TypeMethods.getterMethod(returnType), key, mValueConverter.convert(returnType, defaultVal));
+                        String getterMethodName = TypeMethods.getterMethod(returnType);
+                        if (getterMethodName == null) {
+                            getterMethodName = "getString";
+                            methodBuilder
+                                    .beginControlFlow("if (mConverterFactory == null) ")
+                                    .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
+                                    .endControlFlow()
+                                    .addStatement("$T converter = mConverterFactory.toType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), ClassName.get(String.class), returnTypeName), returnTypeName)
+                                    .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, key, mValueConverter.convert(returnType, defaultVal));
+                        } else {
+                            methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, key, mValueConverter.convert(returnType, defaultVal));
+                        }
                     }
                 }
 

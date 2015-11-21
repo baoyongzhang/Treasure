@@ -39,7 +39,11 @@ public class SimpleValueConverter implements ValueConverter {
             // not have value, return default value.
             isDefault = true;
         }
-        switch (TypeMethods.typeName(type)) {
+        final String typeName = TypeMethods.typeName(type);
+        if (typeName == null) {
+            return typeName;
+        }
+        switch (typeName) {
             case TypeMethods.INT:
                 return isDefault ? "0" : value[0];
             case TypeMethods.FLOAT:

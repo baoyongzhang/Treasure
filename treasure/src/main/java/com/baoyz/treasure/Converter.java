@@ -23,14 +23,16 @@
  */
 package com.baoyz.treasure;
 
-import android.content.Context;
-
 /**
- * Created by baoyz on 15/11/15.
+ * Created by baoyz on 15/11/21.
  */
-public class PreferencesFinder {
+public interface Converter<F, T> {
 
-    public static Object get(Context context, Class<?> clazz, String id, Converter.Factory converterFactory) {
-        return null;
+    T convert(F value);
+
+    interface Factory {
+
+        <F> Converter<F, String> fromType(Class<F> fromClass);
+        <T> Converter<String, T> toType(Class<T> toClass);
     }
 }

@@ -70,7 +70,7 @@ public class TypeMethods {
         if (method != null) {
             return "get" + method;
         }
-        throw new RuntimeException("getter not found");
+        return null;
     }
 
     public static String setterMethod(TypeMirror type) {
@@ -78,6 +78,6 @@ public class TypeMethods {
         if (method != null) {
             return "put" + method;
         }
-        throw new RuntimeException("setter not found");
+        return null;
     }
 }
