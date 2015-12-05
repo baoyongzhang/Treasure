@@ -248,7 +248,7 @@ public class PreferenceGenerator extends ElementGenerator {
                 boolean isReturn = false;
 
                 if (mSupportExpiration) {
-                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, $L).apply()", mExpiredTime);
+                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, System.currentTimeMillis()).apply()", mKey);
                 }
 
                 List<? extends VariableElement> parameters = mMethodElement.getParameters();
@@ -284,6 +284,16 @@ public class PreferenceGenerator extends ElementGenerator {
                 if (annotation != null) {
                     defaultVal = annotation.value();
                 }
+
+                final String defaultValue = mValueConverter.convert(mReturnType, defaultVal);
+
+                if (mSupportExpiration) {
+                    methodBuilder
+                            .beginControlFlow("if ((System.currentTimeMillis() - mConfigPreferences.getLong($S, $L)) > $L)", mKey, 0, mExpiredTime)
+                            .addStatement("return $L", defaultValue)
+                            .endControlFlow();
+                }
+
                 String getterMethodName = TypeMethods.getterMethod(mReturnType);
                 if (getterMethodName == null) {
                     getterMethodName = "getString";
@@ -292,9 +302,9 @@ public class PreferenceGenerator extends ElementGenerator {
                             .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
                             .endControlFlow()
                             .addStatement("$T converter = mConverterFactory.toType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), ClassName.get(String.class), returnTypeName), returnTypeName)
-                            .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, mKey, mValueConverter.convert(mReturnType, defaultVal));
+                            .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, mKey, defaultValue);
                 } else {
-                    methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, mKey, mValueConverter.convert(mReturnType, defaultVal));
+                    methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, mKey, defaultValue);
                 }
             }
 

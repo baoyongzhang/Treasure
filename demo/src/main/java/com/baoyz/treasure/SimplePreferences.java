@@ -65,4 +65,9 @@ public interface SimplePreferences {
 
     @Clear
     void clear();
+
+    @Expired(value = 2, unit = Expired.UNIT_SECONDS)
+    String getTestExpired();
+
+    void setTestExpired(String value);
 }
