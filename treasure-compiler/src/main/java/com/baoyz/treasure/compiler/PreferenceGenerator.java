@@ -28,6 +28,7 @@ import com.baoyz.treasure.Clear;
 import com.baoyz.treasure.Commit;
 import com.baoyz.treasure.Converter;
 import com.baoyz.treasure.Default;
+import com.baoyz.treasure.Expired;
 import com.baoyz.treasure.Preferences;
 import com.baoyz.treasure.Remove;
 import com.baoyz.treasure.Treasure;
@@ -42,9 +43,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
@@ -80,17 +79,55 @@ public class PreferenceGenerator extends ElementGenerator {
         TypeSpec.Builder builder = TypeSpec.classBuilder(className + Treasure.PREFERENCES_SUFFIX)
                 .addSuperinterface(ClassName.get(packageName, className))
                 .addField(ClassName.get("android.content", "SharedPreferences"), "mPreferences", Modifier.PRIVATE)
+                .addField(ClassName.get("android.content", "SharedPreferences"), "mConfigPreferences", Modifier.PRIVATE)
                 .addField(ClassName.get(Converter.Factory.class), "mConverterFactory", Modifier.PRIVATE)
                 .addModifiers(Modifier.PUBLIC)
                 .addJavadoc("Generated code from Treasure. Do not modify!");
 
-        MethodSpec constructor = MethodSpec.constructorBuilder()
+        String defaultEditMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
+
+        List<PreferenceMethod> preferenceMethods = new ArrayList<>();
+
+        boolean supportExpired = false;
+
+        // implements
+        List<? extends Element> enclosedElements = element.getEnclosedElements();
+        for (Element e : enclosedElements) {
+            if (e instanceof ExecutableElement) {
+
+                ExecutableElement methodElement = (ExecutableElement) e;
+
+                String methodName = methodElement.getSimpleName().toString();
+
+                if (methodName.equals("<init>")) {
+                    // interface not has constructor(<init>), class/abstract class has <init>
+                    continue;
+                }
+
+                PreferenceMethod preferenceMethod = new PreferenceMethod(methodElement, defaultEditMethod);
+                preferenceMethods.add(preferenceMethod);
+
+            }
+        }
+
+        for (PreferenceMethod method1 : preferenceMethods) {
+            if (method1.mSupportExpiration) {
+                supportExpired = true;
+                for (PreferenceMethod method2 : preferenceMethods) {
+                    if (method1.mKey != null && method1.mKey.equals(method2.mKey)) {
+                        method2.mSupportExpiration = true;
+                        method2.mExpiredTime = method1.mExpiredTime;
+                    }
+                }
+            }
+        }
+
+        MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.content", "Context"), "context")
                 .addParameter(ClassName.get(Converter.Factory.class), "converterFactory")
                 .addStatement("mPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE)", fileName)
-                .addStatement("mConverterFactory = converterFactory")
-                .build();
+                .addStatement("mConverterFactory = converterFactory");
 
         MethodSpec constructor2 = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
@@ -101,137 +138,167 @@ public class PreferenceGenerator extends ElementGenerator {
                 .addStatement("mPreferences = context.getSharedPreferences($S + \"_\" + id, Context.MODE_PRIVATE)", fileName)
                 .build();
 
-        builder.addMethod(constructor);
+        if (supportExpired) {
+            constructor.addStatement("mConfigPreferences = context.getSharedPreferences($S, Context.MODE_PRIVATE)", fileName + "_config");
+        }
+
+        builder.addMethod(constructor.build());
         builder.addMethod(constructor2);
 
-        // implements
-        // implements extension method
-        List<? extends Element> enclosedElements = element.getEnclosedElements();
-        for (Element e : enclosedElements) {
-            if (e instanceof ExecutableElement) {
-                String editMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
-
-                ExecutableElement methodElement = (ExecutableElement) e;
-
-                String methodName = methodElement.getSimpleName().toString();
-
-                if (methodName.equals("<init>")) {
-                    continue;
-                }
-
-                TypeMirror returnType = methodElement.getReturnType();
-
-                final TypeName returnTypeName = TypeName.get(returnType);
-                MethodSpec.Builder methodBuilder = MethodSpec
-                        .methodBuilder(methodName)
-                        .addModifiers(Modifier.PUBLIC)
-                        .returns(returnTypeName);
-
-                // throw exception
-                if (methodElement.getThrownTypes() != null && methodElement.getThrownTypes().size() > 0) {
-                    List<TypeName> exceptions = new ArrayList<>();
-                    for (TypeMirror type : methodElement.getThrownTypes()) {
-                        TypeName typeName = TypeName.get(type);
-                        exceptions.add(typeName);
-                    }
-                    methodBuilder.addExceptions(exceptions);
-                }
-
-                if (methodElement.getAnnotation(Commit.class) != null) {
-                    editMethod = "commit";
-                } else if (methodElement.getAnnotation(Apply.class) != null) {
-                    editMethod = "apply";
-                }
-
-                if (methodElement.getAnnotation(Clear.class) != null) {
-                    // clear preferences
-                    methodBuilder.addStatement("mPreferences.edit().clear().$L()", editMethod);
-                } else if (methodElement.getAnnotation(Remove.class) != null) {
-
-                    boolean isReturn = false;
-                    if (returnType.getKind().equals(BOOLEAN)) {
-                        editMethod = "commit";
-                        isReturn = true;
-                    }
-
-                    String key = mKeyConverter.convert(methodName);
-                    methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().remove($S).$L()", key, editMethod);
-                } else {
-
-                    /**
-                     *
-                     mPreferences.getAll();
-                     mPreferences.getBoolean();
-                     mPreferences.getFloat();
-                     mPreferences.getInt();
-                     mPreferences.getLong();
-                     mPreferences.getString();
-                     mPreferences.getStringSet();
-                     */
-
-                    List<? extends VariableElement> parameters = methodElement.getParameters();
-
-                    String key = mKeyConverter.convert(methodName);
-                    if (returnType.getKind().equals(VOID) || (returnType.getKind().equals(BOOLEAN) && parameters != null && parameters.size() > 0)) {
-                        // setter
-                        boolean isReturn = false;
-                        if (!returnType.getKind().equals(VOID)) {
-                            // the method return value is boolean and not have parameter, that edit mode is commit.
-                            editMethod = "commit";
-                            isReturn = true;
-                        } else if (parameters == null || parameters.size() < 1) {
-                            throw new RuntimeException("The method must have a return value or parameter");
-                        }
-                        VariableElement param = parameters.get(0);
-                        String value = param.getSimpleName().toString();
-                        final TypeName paramTypeName = TypeName.get(param.asType());
-                        methodBuilder.addParameter(paramTypeName, value);
-
-                        String setterMethodName = TypeMethods.setterMethod(param.asType());
-                        if (setterMethodName == null) {
-                            // Object convert to String
-//                            if (mConverterFactory != null) {
-//                                Converter<?, String> converter = mConverterFactory.fromType(obj.getClass());
-//                                final String value = converter.convert(obj);
-//                            }
-                            setterMethodName = "putString";
-                            methodBuilder
-                                    .beginControlFlow("if (mConverterFactory == null) ")
-                                    .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
-                                    .endControlFlow()
-                                    .addStatement("$T converter = mConverterFactory.fromType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), paramTypeName, ClassName.get(String.class)), paramTypeName)
-                                    .addStatement("String value = converter.convert($L)", value)
-                                    .addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, value).$L()", setterMethodName, key, editMethod);
-                        } else {
-                            methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", setterMethodName, key, value, editMethod);
-                        }
-                    } else {
-                        // getter
-                        String[] defaultVal = null;
-                        final Default annotation = methodElement.getAnnotation(Default.class);
-                        if (annotation != null) {
-                            defaultVal = annotation.value();
-                        }
-                        String getterMethodName = TypeMethods.getterMethod(returnType);
-                        if (getterMethodName == null) {
-                            getterMethodName = "getString";
-                            methodBuilder
-                                    .beginControlFlow("if (mConverterFactory == null) ")
-                                    .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
-                                    .endControlFlow()
-                                    .addStatement("$T converter = mConverterFactory.toType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), ClassName.get(String.class), returnTypeName), returnTypeName)
-                                    .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, key, mValueConverter.convert(returnType, defaultVal));
-                        } else {
-                            methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, key, mValueConverter.convert(returnType, defaultVal));
-                        }
-                    }
-                }
-
-                builder.addMethod(methodBuilder.build());
-
-            }
+        for (PreferenceMethod method : preferenceMethods) {
+            builder.addMethod(method.build());
         }
 
         return builder.build();
+    }
+
+    class PreferenceMethod {
+
+        static final int TYPE_CLEAR = 1;
+        static final int TYPE_REMOVE = 2;
+        static final int TYPE_GETTER = 3;
+        static final int TYPE_SETTER = 4;
+        private final ExecutableElement mMethodElement;
+        private String mEditMethod;
+        int type;
+
+        private final TypeMirror mReturnType;
+        private String mKey;
+        private final String mMethodName;
+        boolean mSupportExpiration;
+        long mExpiredTime;
+
+        public PreferenceMethod(ExecutableElement methodElement, String editMethod) {
+
+            mMethodElement = methodElement;
+
+            mEditMethod = editMethod;
+
+            mMethodName = mMethodElement.getSimpleName().toString();
+
+            mReturnType = mMethodElement.getReturnType();
+
+            final Expired expired = methodElement.getAnnotation(Expired.class);
+            if (expired != null) {
+                mSupportExpiration = true;
+                mExpiredTime = expired.value() * expired.unit();
+            }
+
+            if (methodElement.getAnnotation(Commit.class) != null) {
+                mEditMethod = "commit";
+            } else if (methodElement.getAnnotation(Apply.class) != null) {
+                mEditMethod = "apply";
+            }
+
+            if (methodElement.getAnnotation(Clear.class) != null) {
+                // clear preferences
+                type = TYPE_CLEAR;
+                return;
+            }
+
+            mKey = mKeyConverter.convert(mMethodName);
+            if (methodElement.getAnnotation(Remove.class) != null) {
+                type = TYPE_REMOVE;
+            } else {
+
+                List<? extends VariableElement> parameters = methodElement.getParameters();
+
+                if (mReturnType.getKind().equals(VOID) || (mReturnType.getKind().equals(BOOLEAN) && parameters != null && parameters.size() > 0)) {
+                    // setter
+                    type = TYPE_SETTER;
+                } else {
+                    // getter
+                    type = TYPE_GETTER;
+                }
+            }
+
+        }
+
+        public MethodSpec build() {
+
+            final TypeName returnTypeName = TypeName.get(mReturnType);
+
+            MethodSpec.Builder methodBuilder = MethodSpec
+                    .methodBuilder(mMethodName)
+                    .addModifiers(Modifier.PUBLIC)
+                    .returns(returnTypeName);
+
+            // throw exception
+            if (mMethodElement.getThrownTypes() != null && mMethodElement.getThrownTypes().size() > 0) {
+                List<TypeName> exceptions = new ArrayList<>();
+                for (TypeMirror type : mMethodElement.getThrownTypes()) {
+                    TypeName typeName = TypeName.get(type);
+                    exceptions.add(typeName);
+                }
+                methodBuilder.addExceptions(exceptions);
+            }
+
+            if (type == TYPE_CLEAR) {
+                methodBuilder.addStatement("mPreferences.edit().clear().$L()", mEditMethod);
+            } else if (type == TYPE_REMOVE) {
+                boolean isReturn = false;
+                if (mReturnType.getKind().equals(BOOLEAN)) {
+                    mEditMethod = "commit";
+                    isReturn = true;
+                }
+
+                methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().remove($S).$L()", mKey, mEditMethod);
+            } else if (type == TYPE_SETTER) {
+
+                boolean isReturn = false;
+
+                if (mSupportExpiration) {
+                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, $L).apply()", mExpiredTime);
+                }
+
+                List<? extends VariableElement> parameters = mMethodElement.getParameters();
+                if (!mReturnType.getKind().equals(VOID)) {
+                    // the method return value is boolean and not have parameter, that edit mode is commit.
+                    mEditMethod = "commit";
+                    isReturn = true;
+                } else if (parameters == null || parameters.size() < 1) {
+                    throw new RuntimeException("The method must have a return value or parameter");
+                }
+                VariableElement param = parameters.get(0);
+                String value = param.getSimpleName().toString();
+                final TypeName paramTypeName = TypeName.get(param.asType());
+                methodBuilder.addParameter(paramTypeName, value);
+
+                String setterMethodName = TypeMethods.setterMethod(param.asType());
+                if (setterMethodName == null) {
+                    setterMethodName = "putString";
+                    methodBuilder
+                            .beginControlFlow("if (mConverterFactory == null) ")
+                            .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
+                            .endControlFlow()
+                            .addStatement("$T converter = mConverterFactory.fromType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), paramTypeName, ClassName.get(String.class)), paramTypeName)
+                            .addStatement("String value = converter.convert($L)", value)
+                            .addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, value).$L()", setterMethodName, mKey, mEditMethod);
+                } else {
+                    methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", setterMethodName, mKey, value, mEditMethod);
+                }
+            } else if (type == TYPE_GETTER) {
+
+                String[] defaultVal = null;
+                final Default annotation = mMethodElement.getAnnotation(Default.class);
+                if (annotation != null) {
+                    defaultVal = annotation.value();
+                }
+                String getterMethodName = TypeMethods.getterMethod(mReturnType);
+                if (getterMethodName == null) {
+                    getterMethodName = "getString";
+                    methodBuilder
+                            .beginControlFlow("if (mConverterFactory == null) ")
+                            .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
+                            .endControlFlow()
+                            .addStatement("$T converter = mConverterFactory.toType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), ClassName.get(String.class), returnTypeName), returnTypeName)
+                            .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, mKey, mValueConverter.convert(mReturnType, defaultVal));
+                } else {
+                    methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, mKey, mValueConverter.convert(mReturnType, defaultVal));
+                }
+            }
+
+            return methodBuilder.build();
+        }
     }
 }
