@@ -154,6 +154,9 @@ public class PreferenceGenerator extends ElementGenerator {
 
     class PreferenceMethod {
 
+        static final String SUFFIX_UPDATE = "_update";
+        static final String SUFFIX_TIME = "_time";
+
         static final int TYPE_CLEAR = 1;
         static final int TYPE_REMOVE = 2;
         static final int TYPE_GETTER = 3;
@@ -166,7 +169,7 @@ public class PreferenceGenerator extends ElementGenerator {
         private String mKey;
         private final String mMethodName;
         boolean mSupportExpiration;
-        long mExpiredTime;
+        String mExpiredTime;
 
         public PreferenceMethod(ExecutableElement methodElement, String editMethod) {
 
@@ -181,7 +184,14 @@ public class PreferenceGenerator extends ElementGenerator {
             final Expired expired = methodElement.getAnnotation(Expired.class);
             if (expired != null) {
                 mSupportExpiration = true;
-                mExpiredTime = expired.value() * expired.unit();
+                mExpiredTime = (expired.value() * expired.unit()) + "l";
+            } else {
+                final List<? extends VariableElement> parameters = methodElement.getParameters();
+                for (VariableElement param : parameters) {
+                    if (param.getAnnotation(Expired.class) != null) {
+                        mSupportExpiration = true;
+                    }
+                }
             }
 
             if (methodElement.getAnnotation(Commit.class) != null) {
@@ -247,10 +257,6 @@ public class PreferenceGenerator extends ElementGenerator {
 
                 boolean isReturn = false;
 
-                if (mSupportExpiration) {
-                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, System.currentTimeMillis()).apply()", mKey);
-                }
-
                 List<? extends VariableElement> parameters = mMethodElement.getParameters();
                 if (!mReturnType.getKind().equals(VOID)) {
                     // the method return value is boolean and not have parameter, that edit mode is commit.
@@ -259,10 +265,28 @@ public class PreferenceGenerator extends ElementGenerator {
                 } else if (parameters == null || parameters.size() < 1) {
                     throw new RuntimeException("The method must have a return value or parameter");
                 }
+
                 VariableElement param = parameters.get(0);
                 String value = param.getSimpleName().toString();
                 final TypeName paramTypeName = TypeName.get(param.asType());
                 methodBuilder.addParameter(paramTypeName, value);
+
+                if (mSupportExpiration) {
+                    if (parameters.size() > 1) {
+                        for (int i = 1; i < parameters.size(); i++) {
+                            final VariableElement var = parameters.get(i);
+                            final Expired annotation = var.getAnnotation(Expired.class);
+                            if (annotation != null) {
+                                final String name = var.getSimpleName().toString();
+                                methodBuilder.addParameter(TypeName.get(var.asType()), name);
+                                mExpiredTime = name + " * " + annotation.unit() + "l";
+                                break;
+                            }
+                        }
+                    }
+                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, System.currentTimeMillis()).apply()", mKey + SUFFIX_UPDATE);
+                    methodBuilder.addStatement("mConfigPreferences.edit().putLong($S, $L).apply()", mKey + SUFFIX_TIME, mExpiredTime);
+                }
 
                 String setterMethodName = TypeMethods.setterMethod(param.asType());
                 if (setterMethodName == null) {
@@ -289,7 +313,7 @@ public class PreferenceGenerator extends ElementGenerator {
 
                 if (mSupportExpiration) {
                     methodBuilder
-                            .beginControlFlow("if ((System.currentTimeMillis() - mConfigPreferences.getLong($S, $L)) > $L)", mKey, 0, mExpiredTime)
+                            .beginControlFlow("if ((System.currentTimeMillis() - mConfigPreferences.getLong($S, 0)) > mConfigPreferences.getLong($S, 0))", mKey + SUFFIX_UPDATE, mKey + SUFFIX_TIME)
                             .addStatement("return $L", defaultValue)
                             .endControlFlow();
                 }

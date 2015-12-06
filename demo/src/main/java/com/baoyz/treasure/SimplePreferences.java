@@ -70,4 +70,14 @@ public interface SimplePreferences {
     String getTestExpired();
 
     void setTestExpired(String value);
+
+    String getTestExpired2();
+
+    @Expired(value = 2, unit = Expired.UNIT_SECONDS)
+    void setTestExpired2(String value);
+
+    String getTestExpired3();
+
+    void setTestExpired3(String value, @Expired(unit = Expired.UNIT_SECONDS) int second);
+
 }

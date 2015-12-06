@@ -23,17 +23,27 @@
  */
 package com.baoyz.treasure;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.CLASS;
+
 /**
  * Created by baoyz on 15/12/5.
  */
+@Retention(CLASS)
+@Target({METHOD, PARAMETER})
 public @interface Expired {
 
     int UNIT_MILLISECONDS = 1;
     int UNIT_SECONDS = UNIT_MILLISECONDS * 1000;
     int UNIT_MINUTES = UNIT_SECONDS * 60;
-    int UNIT_HOURS = UNIT_MINUTES  * 60;
+    int UNIT_HOURS = UNIT_MINUTES * 60;
     int UNIT_DAYS = UNIT_HOURS * 24;
 
-    long value();
+    long value() default 0;
+
     int unit() default UNIT_MILLISECONDS;
 }
