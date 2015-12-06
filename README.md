@@ -137,6 +137,25 @@ void clear();
 
 可以声明一个方法，使用`@Clear`注解修饰，那么调用这个方法就会清空整个`Preferences`的数据。
 
+#### 有效期
+
+可以使用`@Expired`指定某个配置的有效期。开始时间是最后一次`set`的时间。`@Expired`可以修饰在`getter`和`setter`方法 ，效果相同。
+
+``` java
+// 10秒钟后过期
+@Expired(value = 10, unit = Expired.UNIT_SECONDS)
+String getTestExpired();
+```
+
+`@Expired`还可以修饰在方法参数上，用于动态指定有效时间，只能在`setter`方法的参数上修饰。
+
+``` java
+// second参数的值是有效时间，单位是UNIT_MINUTES（分钟）
+void setTestExpired(String value, @Expired(unit = Expired.UNIT_MINUTES) int second);
+```
+
+`@Expired`的`unit`不指定默认是`UNIT_MILLISECONDS`毫秒。
+
 #### 对象序列化
 
 如果`interface`中声明的数据类型不是`SharePreferences`支持的，需要用到转换器，`Treasure`默认提供`Serializable`和`Parcelable`的支持。
