@@ -13,8 +13,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.4.0'
-provided 'com.baoyz.treasure:treasure-compiler:0.4.0'
+compile 'com.baoyz.treasure:treasure:0.5.0'
+provided 'com.baoyz.treasure:treasure-compiler:0.5.0'
 ```
 
 ##### 2、定义接口
