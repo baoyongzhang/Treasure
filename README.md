@@ -17,6 +17,8 @@ compile 'com.baoyz.treasure:treasure:0.5.0'
 provided 'com.baoyz.treasure:treasure-compiler:0.5.0'
 ```
 
+注：如果使用了`apt`插件，可以使用`apt`替换`provided`。
+
 ##### 2、定义接口
 
 ``` java
