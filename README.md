@@ -204,6 +204,15 @@ public class GsonConverterFactory implements Converter.Factory {
 Treasure.setConverterFactory(new GsonConverterFactory());
 ```
 
+#### 获取 SharedPreferences 对象
+
+``` java
+@Prototype
+SharedPreferences getSharedPreferences();
+```
+
+使用 `@Prototype` 修饰，返回值是 `SharedPreferences` 类型，调用此方法可以获取原始的 `SharedPreferences` 对象。
+
 #### 关于方法名
 
 如果方法名以`get`、`set`、`put`、`is`、`remove`、`delete`开头，那么会忽略这些前缀并且全部小写作为`key`，如果不包含这些前缀，那么方法名全部小写会作为`key`。
