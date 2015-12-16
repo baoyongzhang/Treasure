@@ -23,6 +23,8 @@
  */
 package com.baoyz.treasure;
 
+import android.content.SharedPreferences;
+
 import java.util.Set;
 
 /**
@@ -80,4 +82,6 @@ public interface SimplePreferences {
 
     void setTestExpired3(String value, @Expired(unit = Expired.UNIT_SECONDS) int second);
 
+    @Prototype
+    SharedPreferences getSharedPreferences();
 }

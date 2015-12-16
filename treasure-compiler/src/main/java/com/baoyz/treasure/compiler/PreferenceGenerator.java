@@ -30,6 +30,7 @@ import com.baoyz.treasure.Converter;
 import com.baoyz.treasure.Default;
 import com.baoyz.treasure.Expired;
 import com.baoyz.treasure.Preferences;
+import com.baoyz.treasure.Prototype;
 import com.baoyz.treasure.Remove;
 import com.baoyz.treasure.Treasure;
 import com.baoyz.treasure.compiler.conveter.KeyConverter;
@@ -161,9 +162,10 @@ public class PreferenceGenerator extends ElementGenerator {
         static final int TYPE_REMOVE = 2;
         static final int TYPE_GETTER = 3;
         static final int TYPE_SETTER = 4;
+        static final int TYPE_PROTOTYPE = 5;
         private final ExecutableElement mMethodElement;
         private String mEditMethod;
-        int type;
+        int mType;
 
         private final TypeMirror mReturnType;
         private String mKey;
@@ -180,6 +182,12 @@ public class PreferenceGenerator extends ElementGenerator {
             mMethodName = mMethodElement.getSimpleName().toString();
 
             mReturnType = mMethodElement.getReturnType();
+
+            final Prototype prototype = methodElement.getAnnotation(Prototype.class);
+            if (prototype != null) {
+                mType = TYPE_PROTOTYPE;
+                return;
+            }
 
             final Expired expired = methodElement.getAnnotation(Expired.class);
             if (expired != null) {
@@ -202,23 +210,23 @@ public class PreferenceGenerator extends ElementGenerator {
 
             if (methodElement.getAnnotation(Clear.class) != null) {
                 // clear preferences
-                type = TYPE_CLEAR;
+                mType = TYPE_CLEAR;
                 return;
             }
 
             mKey = mKeyConverter.convert(mMethodName);
             if (methodElement.getAnnotation(Remove.class) != null) {
-                type = TYPE_REMOVE;
+                mType = TYPE_REMOVE;
             } else {
 
                 List<? extends VariableElement> parameters = methodElement.getParameters();
 
                 if (mReturnType.getKind().equals(VOID) || (mReturnType.getKind().equals(BOOLEAN) && parameters != null && parameters.size() > 0)) {
                     // setter
-                    type = TYPE_SETTER;
+                    mType = TYPE_SETTER;
                 } else {
                     // getter
-                    type = TYPE_GETTER;
+                    mType = TYPE_GETTER;
                 }
             }
 
@@ -243,9 +251,9 @@ public class PreferenceGenerator extends ElementGenerator {
                 methodBuilder.addExceptions(exceptions);
             }
 
-            if (type == TYPE_CLEAR) {
+            if (mType == TYPE_CLEAR) {
                 methodBuilder.addStatement("mPreferences.edit().clear().$L()", mEditMethod);
-            } else if (type == TYPE_REMOVE) {
+            } else if (mType == TYPE_REMOVE) {
                 boolean isReturn = false;
                 if (mReturnType.getKind().equals(BOOLEAN)) {
                     mEditMethod = "commit";
@@ -253,7 +261,7 @@ public class PreferenceGenerator extends ElementGenerator {
                 }
 
                 methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().remove($S).$L()", mKey, mEditMethod);
-            } else if (type == TYPE_SETTER) {
+            } else if (mType == TYPE_SETTER) {
 
                 boolean isReturn = false;
 
@@ -301,7 +309,7 @@ public class PreferenceGenerator extends ElementGenerator {
                 } else {
                     methodBuilder.addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, $L).$L()", setterMethodName, mKey, value, mEditMethod);
                 }
-            } else if (type == TYPE_GETTER) {
+            } else if (mType == TYPE_GETTER) {
 
                 String[] defaultVal = null;
                 final Default annotation = mMethodElement.getAnnotation(Default.class);
@@ -330,6 +338,8 @@ public class PreferenceGenerator extends ElementGenerator {
                 } else {
                     methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, mKey, defaultValue);
                 }
+            } else if (mType == TYPE_PROTOTYPE) {
+                methodBuilder.addStatement("return mPreferences");
             }
 
             return methodBuilder.build();
