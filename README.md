@@ -1,6 +1,6 @@
 # Treasure
 
-[ ![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) ](https://bintray.com/baoyongzhang/maven/Treasure/_latestVersion)[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Treasure-green.svg?style=true)](https://android-arsenal.com/details/1/2787)
+[![Travis CI](https://travis-ci.org/baoyongzhang/Treasure.svg?branch=master) ](https://travis-ci.org/baoyongzhang/Treasure)[![Download](https://api.bintray.com/packages/baoyongzhang/maven/Treasure/images/download.svg) ](https://bintray.com/baoyongzhang/maven/Treasure/_latestVersion)[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Treasure-green.svg?style=true)](https://android-arsenal.com/details/1/2787)
 
 [English document](./README_EN.md)
 
