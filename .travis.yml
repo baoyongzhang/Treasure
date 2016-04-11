@@ -12,5 +12,4 @@ android:
     - extra-android-support
 
 script:
-  - ./gradlew :treasure:build
-  - ./gradlew :treasure-compiler:build
+  - ./gradlew build
