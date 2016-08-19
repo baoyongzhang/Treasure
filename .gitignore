@@ -58,4 +58,6 @@ pom.xml.*
 
 ### AppEngine
 google_generated/
-datanucleus.log 
+datanucleus.log
+
+/repo

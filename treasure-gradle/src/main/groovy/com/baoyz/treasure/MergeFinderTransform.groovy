@@ -106,7 +106,6 @@ public class MergeFinderTransform extends Transform {
                     File finderFile = findClassFile(dir, FINDER_NAME)
                     if (finderFile) {
                         finderClassPaths.add(dir)
-                        // 合并所有 PreferencesFinder
                         def methods = new ArrayList<CtMethod>()
                         // 找到所有的 get 方法
                         finderClassPaths.each { file ->
@@ -122,40 +121,45 @@ public class MergeFinderTransform extends Transform {
                         }
 
                         if (methods.size() > 0) {
-                            def tmp = methods[0]
+                            try {
+                                def tmp = methods[0]
 
-                            def classPool = ClassPool.default
-                            classPool.insertClassPath(dir.absolutePath)
-                            // 添加 android.jar
-                            classPool.insertClassPath(getAndroidClassPath())
-                            // TODO 添加依赖 Class Path，这里主要是为了依赖 treasure 包，但是依赖很多不好寻找，暂时把所有都加上
-                            dependencyClassPaths.each { path ->
-                                classPool.insertClassPath(path)
+                                def classPool = new ClassPool(true)
+                                classPool.insertClassPath(dir.absolutePath)
+                                // 添加 android.jar
+                                classPool.insertClassPath(getAndroidClassPath())
+                                // TODO 添加依赖 Class Path，这里主要是为了依赖 treasure 包，但是依赖很多不好寻找，暂时把所有都加上
+                                dependencyClassPaths.each { path ->
+                                    classPool.insertClassPath(path)
+                                }
+                                def clazz = classPool.get(FINDER_CLASS_NAME)
+                                def getMethod = CtNewMethod.copy(tmp, tmp.name, clazz, null)
+                                // 删除原来的 get 方法
+                                clazz.removeMethod(clazz.getDeclaredMethod("get"))
+
+                                // 合并所有 PreferencesFinder
+                                def body = new StringBuilder()
+                                body.append("{Object result = null;\n")
+                                methods.eachWithIndex { method, index ->
+                                    def newName = "get\$\$${index}"
+                                    method.setName(newName)
+                                    clazz.addMethod(CtNewMethod.copy(method, clazz, null))
+                                    body.append("result = ${method.name}(\$1, \$2, \$3, \$4);\n")
+                                    body.append("if (result != null) return result;\n")
+
+                                }
+                                body.append("return null;\n")
+                                body.append("}\n")
+
+                                getMethod.setBody(body.toString())
+
+                                // 添加新的 get 方法
+                                clazz.addMethod(getMethod)
+                                // 把修改后的 Class 写入文件
+                                clazz.writeFile(dir.absolutePath)
+                            } catch (Exception e) {
+                                e.printStackTrace()
                             }
-                            def clazz = classPool.get(FINDER_CLASS_NAME)
-                            def getMethod = CtNewMethod.copy(tmp, tmp.name, clazz, null)
-                            // 删除原来的 get 方法
-                            clazz.removeMethod(clazz.getDeclaredMethod("get"))
-
-                            def body = new StringBuilder()
-                            body.append("{Object result = null;\n")
-                            methods.eachWithIndex { method, index ->
-                                def newName = "get\$\$${index}"
-                                method.setName(newName)
-                                clazz.addMethod(CtNewMethod.copy(method, clazz, null))
-                                body.append("result = ${method.name}(\$1, \$2, \$3, \$4);\n")
-                                body.append("if (result != null) return result;\n")
-
-                            }
-                            body.append("return null;\n")
-                            body.append("}\n")
-
-                            getMethod.setBody(body.toString())
-
-                            // 添加新的 get 方法
-                            clazz.addMethod(getMethod)
-                            // 把修改后的 Class 写入文件
-                            clazz.writeFile(dir.absolutePath)
                         }
                     }
                 }

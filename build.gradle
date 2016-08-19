@@ -2,12 +2,16 @@
 
 buildscript {
     repositories {
+//        maven {
+//            url uri('./repo')
+//        }
         jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
+        classpath 'com.baoyz.treasure:treasure-gradle:0.6.4'
     }
 }
 
