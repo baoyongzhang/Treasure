@@ -4,27 +4,20 @@
  */
 package com.baoyz.treasure
 
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.QualifiedContent
-import com.android.build.api.transform.Transform
-import com.android.build.api.transform.TransformException
-import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.google.common.collect.Sets
-import javassist.ClassPath
 import javassist.ClassPool
-import javassist.CtClass
 import javassist.CtMethod
 import javassist.CtNewMethod
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.gradle.api.Project
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry;
+import java.util.zip.ZipEntry
 
 /**
  * Created by baoyongzhang on 16/8/17.
@@ -34,9 +27,9 @@ public class MergeFinderTransform extends Transform {
     static String FINDER_NAME = "com/baoyz/treasure/PreferencesFinder.class"
     static String FINDER_CLASS_NAME = "com.baoyz.treasure.PreferencesFinder"
 
-    private Project mProject
+    private ProjectWrapper mProject
 
-    MergeFinderTransform(Project project) {
+    MergeFinderTransform(ProjectWrapper project) {
         mProject = project
     }
 
@@ -74,6 +67,7 @@ public class MergeFinderTransform extends Transform {
         def outputProvider = transformInvocation.outputProvider
 
         def finderClassPaths = new ArrayList<File>()
+        def dependencyClassPaths = new ArrayList<String>()
 
         // 合并 PreferencesFinder
         transformInvocation.inputs.each { input ->
@@ -81,20 +75,13 @@ public class MergeFinderTransform extends Transform {
             // 先从依赖中找出 PreferencesFinder
             input.jarInputs.each { jarInput ->
                 String destName = jarInput.name;
-                /**
-                 * 重名名输出文件,因为可能同名,会覆盖
-                 */
-                def hexName = DigestUtils.md5Hex(jarInput.file.absolutePath);
+                def md5Name = DigestUtils.md5Hex(jarInput.file.absolutePath);
                 if (destName.endsWith(".jar")) {
                     destName = destName.substring(0, destName.length() - 4);
                 }
-                /**
-                 * 获得输出文件
-                 */
-                File dest = outputProvider.getContentLocation(destName + "_" + hexName, jarInput.contentTypes, jarInput.scopes, Format.JAR);
+                File dest = outputProvider.getContentLocation("${destName}_${md5Name}", jarInput.contentTypes, jarInput.scopes, Format.JAR);
 
                 // 检测有没有 PreferencesFinder
-
                 def jarFile = new JarFile(jarInput.file)
                 def entry = findEntry(jarFile, FINDER_NAME)
                 if (entry) {
@@ -103,10 +90,12 @@ public class MergeFinderTransform extends Transform {
                     IOUtils.copy(jarFile.getInputStream(entry), new FileOutputStream(finderFile))
                     finderClassPaths.add(jarInput.file.parentFile)
                     deleteEntry(jarInput.file, jarFile, entry)
+                } else {
+                    // 没有找到 PreferencesFinder，是一个没有使用 Treasure 的依赖，判断是否是 treasure 包。
+                    dependencyClassPaths.add(jarInput.file.absolutePath)
                 }
 
                 FileUtils.copyFile(jarInput.file, dest);
-                mProject.logger.error "Copying ${jarInput.file.absolutePath} to ${dest.absolutePath}"
             }
 
             input.directoryInputs.each { directoryInput ->
@@ -117,11 +106,12 @@ public class MergeFinderTransform extends Transform {
                     File finderFile = findClassFile(dir, FINDER_NAME)
                     if (finderFile) {
                         finderClassPaths.add(dir)
-                        println(".......................Finder File: ${finderFile.absolutePath}")
                         // 合并所有 PreferencesFinder
                         def methods = new ArrayList<CtMethod>()
-                        def classPool = new ClassPool(true)
+                        // 找到所有的 get 方法
                         finderClassPaths.each { file ->
+                            // ClassPool 会有缓存，所以每次都 new 一个，防止从缓存获取
+                            def classPool = new ClassPool(true)
                             def classPath = classPool.insertClassPath(file.absolutePath)
                             def finderClass = classPool.get(FINDER_CLASS_NAME)
                             def method = finderClass.getDeclaredMethod("get")
@@ -130,55 +120,60 @@ public class MergeFinderTransform extends Transform {
                             }
                             classPool.removeClassPath(classPath)
                         }
-                        if (methods.size() > 0){
+
+                        if (methods.size() > 0) {
                             def tmp = methods[0]
 
-                            classPool = ClassPool.default
+                            def classPool = ClassPool.default
                             classPool.insertClassPath(dir.absolutePath)
+                            // 添加 android.jar
+                            classPool.insertClassPath(getAndroidClassPath())
+                            // TODO 添加依赖 Class Path，这里主要是为了依赖 treasure 包，但是依赖很多不好寻找，暂时把所有都加上
+                            dependencyClassPaths.each { path ->
+                                classPool.insertClassPath(path)
+                            }
                             def clazz = classPool.get(FINDER_CLASS_NAME)
                             def getMethod = CtNewMethod.copy(tmp, tmp.name, clazz, null)
-                            clazz.addMethod(getMethod)
-//                            methods.each { method ->
-//                                println(".........add method ${method.name}")
-//                                clazz.addMethod(CtNewMethod.copy(method, clazz, null))
-//                            }
+                            // 删除原来的 get 方法
+                            clazz.removeMethod(clazz.getDeclaredMethod("get"))
 
                             def body = new StringBuilder()
-                            body.append("Object result = null;")
+                            body.append("{Object result = null;\n")
                             methods.eachWithIndex { method, index ->
                                 def newName = "get\$\$${index}"
                                 method.setName(newName)
                                 clazz.addMethod(CtNewMethod.copy(method, clazz, null))
-                                println(".........newName ${method.name}")
-                                body.append("result = ${method.name}(context, clazz, id, factory);")
-                                body.append("if (result != null) return result;")
+                                body.append("result = ${method.name}(\$1, \$2, \$3, \$4);\n")
+                                body.append("if (result != null) return result;\n")
+
                             }
-                            body.append("return null;")
+                            body.append("return null;\n")
+                            body.append("}\n")
 
-                            clazz.writeFile()
-                            /*
+                            getMethod.setBody(body.toString())
 
-                             Object result = null;
-
-                             result = get$$1(context, clazz, id, factory);
-                             if (result != null) return result;
-
-                             return null;
-
-                            * */
-//                            public static Object get(Context context, Class clazz, String id, Converter.Factory factory) {
+                            // 添加新的 get 方法
+                            clazz.addMethod(getMethod)
+                            // 把修改后的 Class 写入文件
+                            clazz.writeFile(dir.absolutePath)
                         }
                     }
                 }
 
                 File dest = outputProvider.getContentLocation(directoryInput.name, directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY);
-                mProject.logger.error "Copying ${dir.absolutePath} to ${dest.absolutePath}"
-                /**
-                 * 处理完后拷到目标文件
-                 */
                 FileUtils.copyDirectory(dir, dest);
             }
         }
+    }
+
+    String getAndroidClassPath() {
+        Properties properties = new Properties()
+        properties.load(mProject.rootProject.file('local.properties').newDataInputStream())
+        def sdkDir = properties.getProperty('sdk.dir')
+        if (sdkDir == null || sdkDir.isEmpty()) {
+            sdkDir = System.getenv("ANDROID_HOME")
+        }
+        return "${sdkDir}/platforms/${mProject.android.compileSdkVersion}/android.jar"
     }
 
     File findClassFile(File file, String className) {
@@ -236,4 +231,5 @@ public class MergeFinderTransform extends Transform {
         }
         tmpJar.renameTo(file)
     }
+
 }
