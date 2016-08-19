@@ -16,19 +16,19 @@ public abstract class BasePlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-
+        def wrapper = new ProjectWrapper(project);
         if (project.getPlugins().hasPlugin(AppPlugin)) {
-            onAppApply(project)
+            onAppApply(wrapper)
         } else if (project.getPlugins().hasPlugin(LibraryPlugin)) {
-            onLibraryApply(project)
+            onLibraryApply(wrapper)
         }
     }
 
-    void onAppApply(Project project) {
+    void onAppApply(ProjectWrapper project) {
 
     }
 
-    void onLibraryApply(Project project) {
+    void onLibraryApply(ProjectWrapper project) {
 
     }
 
