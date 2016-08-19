@@ -56,7 +56,6 @@ public abstract class ElementGenerator implements Generator {
         try {
             javaFile.writeTo(mFiler);
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
