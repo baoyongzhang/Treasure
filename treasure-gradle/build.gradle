@@ -1,0 +1,30 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile 'com.android.tools.build:gradle:2.1.2'
+    compile 'com.android.tools.build:gradle-api:2.1.2'
+    compile 'com.android.tools.build:gradle-core:2.1.2'
+    compile 'com.android.tools.build:builder:2.1.2'
+    compile 'org.javassist:javassist:3.20.0-GA'
+    compile 'org.codehaus.groovy:groovy:2.4.1'
+}
+
+
+apply from: rootProject.file('gradle/gradle-jcenter-push.gradle')
+
+//group='com.baoyz.treasure'
+//version='0.6.3'
+//
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: uri('../repo'))
+//        }
+//    }
+//}

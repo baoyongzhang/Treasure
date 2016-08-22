@@ -22,4 +22,7 @@ dependencies {
     provided 'com.google.android:android:+'
 }
 
+targetCompatibility = '1.7'
+sourceCompatibility = '1.7'
+
 apply from: rootProject.file('gradle/gradle-jcenter-push.gradle')

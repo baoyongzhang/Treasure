@@ -1,1 +1,1 @@
-include ':demo', ':treasure', ':treasure-compiler'
+include ':demo', ':treasure', ':treasure-compiler', ':demo_library', ':treasure-gradle'

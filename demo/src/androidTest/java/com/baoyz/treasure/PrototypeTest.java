@@ -2,6 +2,7 @@ package com.baoyz.treasure;
 
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.test.ApplicationTestCase;
 
 /**
@@ -10,6 +11,13 @@ import android.test.ApplicationTestCase;
 public class PrototypeTest extends ApplicationTestCase<Application> {
 
     private boolean changed;
+    private SharedPreferences.OnSharedPreferenceChangeListener mListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            changed = true;
+            assertEquals(key, "username");
+        }
+    };
 
     public PrototypeTest() {
         super(Application.class);
@@ -18,15 +26,12 @@ public class PrototypeTest extends ApplicationTestCase<Application> {
     public void testPrototypeTest() {
         final SimplePreferences simplePreferences = Treasure.get(getContext(), SimplePreferences.class);
         final SharedPreferences sharedPreferences = simplePreferences.getSharedPreferences();
-        sharedPreferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                changed = true;
-                assertEquals(key, "username");
-            }
-        });
+        sharedPreferences.registerOnSharedPreferenceChangeListener(mListener);
         simplePreferences.setUsername("test");
         assertEquals(sharedPreferences.getString("username", null), "test");
+        simplePreferences.clear();
+        assertNull(sharedPreferences.getString("username", null));
+        SystemClock.sleep(1000);
         assertTrue(changed);
     }
 }

@@ -32,7 +32,7 @@ import java.util.HashMap;
  */
 public class Treasure {
 
-    public static final String PREFERENCES_SUFFIX = "$$Preferences";
+    public static final String PREFERENCES_SUFFIX = "__Treasure";
 
     private static HashMap<Key, Object> sPreferencesCache;
     private static Converter.Factory sConverterFactory;

@@ -101,7 +101,6 @@ public class FinderGenerator implements Generator {
         try {
             javaFile.writeTo(mFiler);
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
