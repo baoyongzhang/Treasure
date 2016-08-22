@@ -11,8 +11,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.3.1'
-provided 'com.baoyz.treasure:treasure-compiler:0.3.1'
+compile 'com.baoyz.treasure:treasure:0.6.4'
+provided 'com.baoyz.treasure:treasure-compiler:0.6.4'
 ```
 
 ##### Step 2, Define interface
@@ -127,6 +127,75 @@ void clear();
 ```
 
 Using `@Clear` annotation declared methods, calling methods to clear the preferences data.
+
+#### Effective time
+
+You can use `@Expired` specify a effective time configuration. Start counting from the last call setter method. @Expired can declare in the getter and setter methods, the same effect.
+
+``` java
+// Ten seconds expired
+@Expired(value = 10, unit = Expired.UNIT_SECONDS)
+String getTestExpired();
+```
+
+`@Expired` can also declare the method parameters for dynamically specify a valid time, it can only be declared in the parameter `setter` methods. `unit` default is `UNIT_MILLISECONDS`.
+
+``` java
+void setTestExpired(String value, @Expired(unit = Expired.UNIT_MINUTES) int second);
+```
+
+#### Object serialization
+
+Treasure support `Serializable` and `Parcelable`.
+
+``` java
+// Serializable or Parcelable
+class User implements Serializable {...}
+
+// Preferences Interface
+void setUser(User user);
+User getUser();
+```
+
+You can customize the converter. For example, using `GSON`.
+
+``` java
+public class GsonConverterFactory implements Converter.Factory {
+
+    @Override
+    public <F> Converter<F, String> fromType(Class<F> fromClass) {
+        return new Converter<F, String>() {
+            @Override
+            public String convert(F value) {
+                return new Gson().toJson(value);
+            }
+        };
+    }
+
+    @Override
+    public <T> Converter<String, T> toType(final Class<T> toClass) {
+        return new Converter<String, T>() {
+            @Override
+            public T convert(String value) {
+                return new Gson().fromJson(value, toClass);
+            }
+        };
+    }
+}
+```
+
+After you customize, you need to call `Treasure.set ConverterFactory ()` method to set a custom converter.
+
+``` java
+Treasure.setConverterFactory(new GsonConverterFactory());
+```
+
+#### Get `SharedPreferences` Object
+
+``` java
+@Prototype
+SharedPreferences getSharedPreferences();
+```
 
 #### About method name
 
