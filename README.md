@@ -10,14 +10,34 @@
 
 ##### 1、添加依赖
 
-Gradle
+#### Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.5.0'
-provided 'com.baoyz.treasure:treasure-compiler:0.5.0'
+compile 'com.baoyz.treasure:treasure:0.6.4'
+provided 'com.baoyz.treasure:treasure-compiler:0.6.4'
 ```
 
 注：如果使用了`apt`插件，可以使用`apt`替换`provided`。
+
+#### Gradle Plugin
+
+如果在多 Module 中同时使用 Treasure，会出现 `Multiple dex files define Lcom/baoyz/treasure/PreferencesFinder` 错误，使用 Treasure Gradle Plugin 可以解决这个错误。
+
+在 `buildscript` 中添加依赖
+
+``` groovy
+dependencies {
+    classpath 'com.baoyz.treasure:treasure-gradle:0.6.4'
+}
+```
+
+然后只在你的 Application Module 中 apply 插件，Library Module 不需要。
+
+``` groovy
+apply plugin: 'com.baoyz.treasure'
+```
+
+如果没有多 Module 同时使用 Treasure 的情况，不需要使用这个插件。
 
 ##### 2、定义接口
 
