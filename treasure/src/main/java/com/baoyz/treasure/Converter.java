@@ -23,6 +23,8 @@
  */
 package com.baoyz.treasure;
 
+import java.lang.reflect.Type;
+
 /**
  * Created by baoyz on 15/11/21.
  */
@@ -32,7 +34,7 @@ public interface Converter<F, T> {
 
     interface Factory {
 
-        <F> Converter<F, String> fromType(Class<F> fromClass);
-        <T> Converter<String, T> toType(Class<T> toClass);
+        <F> Converter<F, String> fromType(Type fromType);
+        <T> Converter<String, T> toType(Type toType);
     }
 }

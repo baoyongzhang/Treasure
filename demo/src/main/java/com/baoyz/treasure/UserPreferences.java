@@ -23,6 +23,8 @@
  */
 package com.baoyz.treasure;
 
+import java.util.List;
+
 /**
  * Created by baoyz on 15/11/15.
  */
@@ -40,4 +42,8 @@ public interface UserPreferences {
 
     @Clear
     void clear();
+
+    void setUserList(List<User> list);
+
+    List<User> getUserList();
 }

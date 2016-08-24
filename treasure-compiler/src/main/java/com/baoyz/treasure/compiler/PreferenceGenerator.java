@@ -236,6 +236,8 @@ public class PreferenceGenerator extends ElementGenerator {
 
             final TypeName returnTypeName = TypeName.get(mReturnType);
 
+            checkParamType(returnTypeName);
+
             MethodSpec.Builder methodBuilder = MethodSpec
                     .methodBuilder(mMethodName)
                     .addModifiers(Modifier.PUBLIC)
@@ -275,8 +277,12 @@ public class PreferenceGenerator extends ElementGenerator {
                 }
 
                 VariableElement param = parameters.get(0);
+
                 String value = param.getSimpleName().toString();
                 final TypeName paramTypeName = TypeName.get(param.asType());
+
+                checkParamType(paramTypeName);
+
                 methodBuilder.addParameter(paramTypeName, value);
 
                 if (mSupportExpiration) {
@@ -302,8 +308,32 @@ public class PreferenceGenerator extends ElementGenerator {
                     methodBuilder
                             .beginControlFlow("if (mConverterFactory == null) ")
                             .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
-                            .endControlFlow()
-                            .addStatement("$T converter = mConverterFactory.fromType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), paramTypeName, ClassName.get(String.class)), paramTypeName)
+                            .endControlFlow();
+                    if (isRawType(paramTypeName)) {
+                        // raw class type
+                        methodBuilder
+                                .addStatement(
+                                        "$T converter = mConverterFactory.fromType($T.class)",
+                                        ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                paramTypeName,
+                                                ClassName.get(String.class)),
+                                        paramTypeName);
+                    } else {
+                        // generic type
+                        if (paramTypeName instanceof ParameterizedTypeName) {
+                            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) paramTypeName;
+                            String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
+                            methodBuilder
+                                    .addStatement(
+                                            "$T converter = mConverterFactory.fromType($L)",
+                                            ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                    paramTypeName,
+                                                    ClassName.get(String.class)),
+                                            newParameterizedTypeCode);
+                        }
+                    }
+
+                    methodBuilder
                             .addStatement("String value = converter.convert($L)", value)
                             .addStatement((isReturn ? "return " : "") + "mPreferences.edit().$L($S, value).$L()", setterMethodName, mKey, mEditMethod);
                 } else {
@@ -332,8 +362,29 @@ public class PreferenceGenerator extends ElementGenerator {
                     methodBuilder
                             .beginControlFlow("if (mConverterFactory == null) ")
                             .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
-                            .endControlFlow()
-                            .addStatement("$T converter = mConverterFactory.toType($T.class)", ParameterizedTypeName.get(ClassName.get(Converter.class), ClassName.get(String.class), returnTypeName), returnTypeName)
+                            .endControlFlow();
+                    if (isRawType(returnTypeName)) {
+                        // raw class type
+                        methodBuilder
+                                .addStatement("$T converter = mConverterFactory.toType($T.class)",
+                                        ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                ClassName.get(String.class),
+                                                returnTypeName),
+                                        returnTypeName);
+                    } else {
+                        // generic type
+                        if (returnTypeName instanceof ParameterizedTypeName) {
+                            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) returnTypeName;
+                            String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
+                            methodBuilder
+                                    .addStatement("$T converter = mConverterFactory.toType($L)",
+                                            ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                    ClassName.get(String.class),
+                                                    returnTypeName),
+                                            newParameterizedTypeCode);
+                        }
+                    }
+                    methodBuilder
                             .addStatement("return converter.convert(mPreferences.$L($S, $L))", getterMethodName, mKey, defaultValue);
                 } else {
                     methodBuilder.addStatement("return mPreferences.$L($S, $L)", getterMethodName, mKey, defaultValue);
@@ -344,5 +395,74 @@ public class PreferenceGenerator extends ElementGenerator {
 
             return methodBuilder.build();
         }
+
+        private String buildNewParameterizedTypeCode(ParameterizedTypeName typeName) {
+            ParameterizedTypeTemplate template = new ParameterizedTypeTemplate();
+            template.rawType = typeName.rawType.toString();
+            List<TypeName> typeArguments = typeName.typeArguments;
+            StringBuilder stringBuilder = new StringBuilder();
+            for (TypeName type : typeArguments) {
+                checkParamType(type);
+                if (isRawType(type)) {
+                    stringBuilder.append(type.toString());
+                } else if (isParameterizedType(type)) {
+                    stringBuilder.append(buildNewParameterizedTypeCode((ParameterizedTypeName) type));
+                }
+                stringBuilder.append(".class,");
+            }
+            template.types = stringBuilder.toString();
+            return template.build();
+        }
+
+        private boolean isRawType(TypeName paramTypeName) {
+            return paramTypeName instanceof ClassName;
+        }
+
+        private boolean isParameterizedType(TypeName paramTypeName) {
+            return paramTypeName instanceof ParameterizedTypeName;
+        }
+
+        private void checkParamType(TypeName param) {
+            System.out.println("......................type " + param.getClass().getCanonicalName());
+            if (param.getClass() == TypeName.class ||
+                    isRawType(param) ||
+                    isParameterizedType(param)) {
+                return;
+            }
+            throw new NotSupportTypeException("Treasure not support type: " + param.toString());
+        }
     }
+
+    static class ParameterizedTypeTemplate {
+
+        static String TYPES = "$types";
+        static String RAW_TYPE = "$rawType";
+        static String OWNER_TYPE = "$ownerType";
+
+        static String TEMPLATE = "new java.lang.reflect.ParameterizedType() {\n" +
+                "    @Override\n" +
+                "    public java.lang.reflect.Type[] getActualTypeArguments() {\n" +
+                "        return new java.lang.reflect.Type[]{" + TYPES + "};\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public java.lang.reflect.Type getRawType() {\n" +
+                "        return " + RAW_TYPE + ".class;\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public java.lang.reflect.Type getOwnerType() {\n" +
+                "        return " + OWNER_TYPE + ";\n" +
+                "    }\n" +
+                "}";
+
+        String types = "";
+        String rawType = "Object";
+        String ownerType = "null";
+
+        String build() {
+            return TEMPLATE.replace(TYPES, types).replace(RAW_TYPE, rawType).replace(OWNER_TYPE, ownerType);
+        }
+    }
+
 }

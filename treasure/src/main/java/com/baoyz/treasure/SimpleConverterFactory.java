@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 
 /**
  * Created by baoyz on 15/11/21.
@@ -100,28 +101,34 @@ public class SimpleConverterFactory implements Converter.Factory {
     }
 
     @Override
-    public <F> Converter<F, String> fromType(Class<F> fromClass) {
-        if (Serializable.class.isAssignableFrom(fromClass)) {
-            return (Converter<F, String>) mFromSerializableConverter;
-        }
-        if (Parcelable.class.isAssignableFrom(fromClass)) {
-            return (Converter<F, String>) mFromParcelableConverter;
+    public <F> Converter<F, String> fromType(Type fromType) {
+        if (fromType instanceof Class) {
+            Class fromClass = (Class) fromType;
+            if (Serializable.class.isAssignableFrom(fromClass)) {
+                return (Converter<F, String>) mFromSerializableConverter;
+            }
+            if (Parcelable.class.isAssignableFrom(fromClass)) {
+                return (Converter<F, String>) mFromParcelableConverter;
+            }
         }
         throw new IllegalArgumentException("SimpleConverterFactory supports only Serializable and Parcelable");
     }
 
     @Override
-    public <T> Converter<String, T> toType(Class<T> toClass) {
-        if (Serializable.class.isAssignableFrom(toClass)) {
-            return (Converter<String, T>) mToSerializableConverter;
-        }
-        if (Parcelable.class.isAssignableFrom(toClass)) {
-            try {
-                return new ToParcelableConverter<T>((Parcelable.Creator<T>) toClass.getField("CREATOR").get(null));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
+    public <T> Converter<String, T> toType(Type toType) {
+        if (toType instanceof Class) {
+            Class toClass = (Class) toType;
+            if (Serializable.class.isAssignableFrom(toClass)) {
+                return (Converter<String, T>) mToSerializableConverter;
+            }
+            if (Parcelable.class.isAssignableFrom(toClass)) {
+                try {
+                    return new ToParcelableConverter<T>((Parcelable.Creator<T>) toClass.getField("CREATOR").get(null));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
             }
         }
         throw new IllegalArgumentException("SimpleConverterFactory supports only Serializable and Parcelable");

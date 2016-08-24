@@ -25,13 +25,15 @@ package com.baoyz.treasure;
 
 import com.google.gson.Gson;
 
+import java.lang.reflect.Type;
+
 /**
  * Created by baoyz on 15/11/21.
  */
 public class GsonConverterFactory implements Converter.Factory {
 
     @Override
-    public <F> Converter<F, String> fromType(Class<F> fromClass) {
+    public <F> Converter<F, String> fromType(Type fromType) {
         return new Converter<F, String>() {
             @Override
             public String convert(F value) {
@@ -41,11 +43,11 @@ public class GsonConverterFactory implements Converter.Factory {
     }
 
     @Override
-    public <T> Converter<String, T> toType(final Class<T> toClass) {
+    public <T> Converter<String, T> toType(final Type toType) {
         return new Converter<String, T>() {
             @Override
             public T convert(String value) {
-                return new Gson().fromJson(value, toClass);
+                return new Gson().fromJson(value, toType);
             }
         };
     }
