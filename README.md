@@ -13,8 +13,8 @@
 #### Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.6.4'
-provided 'com.baoyz.treasure:treasure-compiler:0.6.4'
+compile 'com.baoyz.treasure:treasure:0.7.0'
+provided 'com.baoyz.treasure:treasure-compiler:0.7.0'
 ```
 
 注：如果使用了`apt`插件，可以使用`apt`替换`provided`。
@@ -27,7 +27,7 @@ provided 'com.baoyz.treasure:treasure-compiler:0.6.4'
 
 ``` groovy
 dependencies {
-    classpath 'com.baoyz.treasure:treasure-gradle:0.6.4'
+    classpath 'com.baoyz.treasure:treasure-gradle:0.7.0'
 }
 ```
 
