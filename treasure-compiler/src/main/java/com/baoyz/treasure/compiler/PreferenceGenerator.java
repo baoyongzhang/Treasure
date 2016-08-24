@@ -404,11 +404,11 @@ public class PreferenceGenerator extends ElementGenerator {
             for (TypeName type : typeArguments) {
                 checkParamType(type);
                 if (isRawType(type)) {
-                    stringBuilder.append(type.toString());
+                    stringBuilder.append(type.toString()).append(".class");
                 } else if (isParameterizedType(type)) {
                     stringBuilder.append(buildNewParameterizedTypeCode((ParameterizedTypeName) type));
                 }
-                stringBuilder.append(".class,");
+                stringBuilder.append(",");
             }
             template.types = stringBuilder.toString();
             return template.build();
@@ -423,7 +423,6 @@ public class PreferenceGenerator extends ElementGenerator {
         }
 
         private void checkParamType(TypeName param) {
-            System.out.println("......................type " + param.getClass().getCanonicalName());
             if (param.getClass() == TypeName.class ||
                     isRawType(param) ||
                     isParameterizedType(param)) {
@@ -435,9 +434,9 @@ public class PreferenceGenerator extends ElementGenerator {
 
     static class ParameterizedTypeTemplate {
 
-        static String TYPES = "$types";
-        static String RAW_TYPE = "$rawType";
-        static String OWNER_TYPE = "$ownerType";
+        static String TYPES = "{types}";
+        static String RAW_TYPE = "{rawType}";
+        static String OWNER_TYPE = "{ownerType}";
 
         static String TEMPLATE = "new java.lang.reflect.ParameterizedType() {\n" +
                 "    @Override\n" +
