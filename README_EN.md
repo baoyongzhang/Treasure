@@ -11,8 +11,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.6.4'
-provided 'com.baoyz.treasure:treasure-compiler:0.6.4'
+compile 'com.baoyz.treasure:treasure:0.7.0'
+provided 'com.baoyz.treasure:treasure-compiler:0.7.0'
 ```
 
 ##### Step 2, Define interface
@@ -163,7 +163,7 @@ You can customize the converter. For example, using `GSON`.
 public class GsonConverterFactory implements Converter.Factory {
 
     @Override
-    public <F> Converter<F, String> fromType(Class<F> fromClass) {
+    public <F> Converter<F, String> fromType(Type fromType) {
         return new Converter<F, String>() {
             @Override
             public String convert(F value) {
@@ -173,11 +173,11 @@ public class GsonConverterFactory implements Converter.Factory {
     }
 
     @Override
-    public <T> Converter<String, T> toType(final Class<T> toClass) {
+    public <T> Converter<String, T> toType(final Type toType) {
         return new Converter<String, T>() {
             @Override
             public T convert(String value) {
-                return new Gson().fromJson(value, toClass);
+                return new Gson().fromJson(value, toType);
             }
         };
     }
