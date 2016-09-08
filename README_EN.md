@@ -11,8 +11,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.7.0'
-provided 'com.baoyz.treasure:treasure-compiler:0.7.0'
+compile 'com.baoyz.treasure:treasure:0.7.1'
+provided 'com.baoyz.treasure:treasure-compiler:0.7.1'
 ```
 
 ##### Step 2, Define interface
