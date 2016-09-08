@@ -1,7 +1,7 @@
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'maven'
-version = "0.7.0"
+version = "0.7.1"
 
 def siteUrl = 'https://github.com/baoyongzhang/Treasure'
 def gitUrl = 'https://github.com/baoyongzhang/Treasure.git'

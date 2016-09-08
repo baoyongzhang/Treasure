@@ -54,6 +54,8 @@ public interface SimplePreferences {
 
     void setPerson(User obj);
     User getPerson();
+    @Remove
+    void removePerson();
 
     // if return boolean, that call edit().commit() and return this commit result.
     boolean setStringSet(Set<String> stringSet);
