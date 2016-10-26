@@ -12,7 +12,7 @@ Gradle
 
 ``` groovy
 compile 'com.baoyz.treasure:treasure:0.7.1'
-provided 'com.baoyz.treasure:treasure-compiler:0.7.1'
+annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.1'
 ```
 
 ##### Step 2, Define interface
