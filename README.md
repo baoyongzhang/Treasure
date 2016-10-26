@@ -14,10 +14,8 @@
 
 ``` groovy
 compile 'com.baoyz.treasure:treasure:0.7.1'
-provided 'com.baoyz.treasure:treasure-compiler:0.7.1'
+annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.1'
 ```
-
-注：如果使用了`apt`插件，可以使用`apt`替换`provided`。
 
 #### Gradle Plugin
 
