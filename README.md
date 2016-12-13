@@ -13,8 +13,8 @@
 #### Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.7.1'
-annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.1'
+compile 'com.baoyz.treasure:treasure:0.7.2'
+annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.2'
 ```
 
 #### Gradle Plugin
@@ -25,7 +25,7 @@ annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.1'
 
 ``` groovy
 dependencies {
-    classpath 'com.baoyz.treasure:treasure-gradle:0.7.1'
+    classpath 'com.baoyz.treasure:treasure-gradle:0.7.2'
 }
 ```
 
@@ -230,6 +230,14 @@ SharedPreferences getSharedPreferences();
 ```
 
 使用 `@Prototype` 修饰，返回值是 `SharedPreferences` 类型，调用此方法可以获取原始的 `SharedPreferences` 对象。
+
+#### 自定义 Key
+``` java
+@Key("custom_key")
+String getValue();
+@Key("custom_key")
+void setValue(String value);
+```
 
 #### 关于方法名
 
