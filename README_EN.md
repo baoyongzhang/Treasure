@@ -11,8 +11,8 @@
 Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.7.1'
-annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.1'
+compile 'com.baoyz.treasure:treasure:0.7.2'
+annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.2'
 ```
 
 ##### Step 2, Define interface
@@ -195,6 +195,14 @@ Treasure.setConverterFactory(new GsonConverterFactory());
 ``` java
 @Prototype
 SharedPreferences getSharedPreferences();
+```
+#### Custom key
+
+```java
+@Key("custom_key")
+String getValue();
+@Key("custom_key")
+void setValue(String value);
 ```
 
 #### About method name
