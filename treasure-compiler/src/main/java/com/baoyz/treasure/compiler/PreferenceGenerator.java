@@ -29,6 +29,7 @@ import com.baoyz.treasure.Commit;
 import com.baoyz.treasure.Converter;
 import com.baoyz.treasure.Default;
 import com.baoyz.treasure.Expired;
+import com.baoyz.treasure.Key;
 import com.baoyz.treasure.Preferences;
 import com.baoyz.treasure.Prototype;
 import com.baoyz.treasure.Remove;
@@ -214,7 +215,13 @@ public class PreferenceGenerator extends ElementGenerator {
                 return;
             }
 
-            mKey = mKeyConverter.convert(mMethodName);
+            Key key = methodElement.getAnnotation(Key.class);
+            if (key == null) {
+                mKey = mKeyConverter.convert(mMethodName);
+            } else {
+                mKey = key.value();
+            }
+
             if (methodElement.getAnnotation(Remove.class) != null) {
                 mType = TYPE_REMOVE;
             } else {

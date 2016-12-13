@@ -86,4 +86,9 @@ public interface SimplePreferences {
 
     @Prototype
     SharedPreferences getSharedPreferences();
+
+    @Key("test_key")
+    String getTestKey();
+    @Key("test_key")
+    void setTestKey(String key);
 }
