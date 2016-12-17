@@ -25,6 +25,7 @@ package com.baoyz.treasure;
 
 import android.content.SharedPreferences;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -91,4 +92,13 @@ public interface SimplePreferences {
     String getTestKey();
     @Key("test_key")
     void setTestKey(String key);
+
+    void setIntArray(int[] arr);
+    int[] getIntArray();
+
+    void setUserArray(User[] arr);
+    User[] getUserArray();
+
+    void setListUserArray(List<User>[] arr);
+    List<User>[] getListUserArray();
 }

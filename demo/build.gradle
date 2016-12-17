@@ -29,7 +29,7 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile project(':treasure')
-    provided project(':treasure-compiler')
+    annotationProcessor project(':treasure-compiler')
     compile 'com.android.support:appcompat-v7:23.1.0'
     compile 'com.android.support:design:23.1.0'
     compile 'com.google.code.gson:gson:2.4'

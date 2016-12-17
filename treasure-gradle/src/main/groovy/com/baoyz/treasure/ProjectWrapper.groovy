@@ -14,6 +14,7 @@ import org.gradle.api.component.SoftwareComponentContainer
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.CopySpec
+import org.gradle.api.file.DeleteSpec
 import org.gradle.api.file.FileTree
 import org.gradle.api.initialization.dsl.ScriptHandler
 import org.gradle.api.invocation.Gradle
@@ -208,6 +209,11 @@ public class ProjectWrapper implements Project{
         return mProject.delete(objects);
     }
 
+    @Override
+    WorkResult delete(Action<? super DeleteSpec> action) {
+        return project.delete(action);
+    }
+
     public ConfigurationContainer getConfigurations() {
         return mProject.getConfigurations();
     }
@@ -374,6 +380,11 @@ public class ProjectWrapper implements Project{
 
     public Object property(String s) throws MissingPropertyException {
         return mProject.property(s);
+    }
+
+    @Override
+    Object findProperty(String s) {
+        return mProject.findProject(s);
     }
 
     public Map<String, Project> getChildProjects() {

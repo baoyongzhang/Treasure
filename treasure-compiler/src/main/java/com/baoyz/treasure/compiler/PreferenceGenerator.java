@@ -38,12 +38,16 @@ import com.baoyz.treasure.compiler.conveter.KeyConverter;
 import com.baoyz.treasure.compiler.conveter.SimpleKeyConverter;
 import com.baoyz.treasure.compiler.conveter.SimpleValueConverter;
 import com.baoyz.treasure.compiler.conveter.ValueConverter;
+import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -316,7 +320,7 @@ public class PreferenceGenerator extends ElementGenerator {
                             .beginControlFlow("if (mConverterFactory == null) ")
                             .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
                             .endControlFlow();
-                    if (isRawType(paramTypeName)) {
+                    if (isRawType(paramTypeName) || isArrayRawType(paramTypeName)) {
                         // raw class type
                         methodBuilder
                                 .addStatement(
@@ -327,7 +331,7 @@ public class PreferenceGenerator extends ElementGenerator {
                                         paramTypeName);
                     } else {
                         // generic type
-                        if (paramTypeName instanceof ParameterizedTypeName) {
+                        if (isParameterizedType(paramTypeName)) {
                             ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) paramTypeName;
                             String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
                             methodBuilder
@@ -337,6 +341,18 @@ public class PreferenceGenerator extends ElementGenerator {
                                                     paramTypeName,
                                                     ClassName.get(String.class)),
                                             newParameterizedTypeCode);
+                        }
+                        if (isArrayParameterizedType(paramTypeName)) {
+                            ArrayTypeName arrayTypeName = (ArrayTypeName) paramTypeName;
+                            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) arrayTypeName.componentType;
+                            String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
+                            methodBuilder
+                                    .addStatement(
+                                            "$T converter = mConverterFactory.fromType($L)",
+                                            ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                    paramTypeName,
+                                                    ClassName.get(String.class)),
+                                            GenericArrayTypeTemplate.build(newParameterizedTypeCode));
                         }
                     }
 
@@ -370,7 +386,7 @@ public class PreferenceGenerator extends ElementGenerator {
                             .beginControlFlow("if (mConverterFactory == null) ")
                             .addStatement("throw new NullPointerException(\"You need set ConverterFactory Object. :D\")")
                             .endControlFlow();
-                    if (isRawType(returnTypeName)) {
+                    if (isRawType(returnTypeName) || isArrayRawType(returnTypeName)) {
                         // raw class type
                         methodBuilder
                                 .addStatement("$T converter = mConverterFactory.toType($T.class)",
@@ -380,7 +396,7 @@ public class PreferenceGenerator extends ElementGenerator {
                                         returnTypeName);
                     } else {
                         // generic type
-                        if (returnTypeName instanceof ParameterizedTypeName) {
+                        if (isParameterizedType(returnTypeName)) {
                             ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) returnTypeName;
                             String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
                             methodBuilder
@@ -389,6 +405,18 @@ public class PreferenceGenerator extends ElementGenerator {
                                                     ClassName.get(String.class),
                                                     returnTypeName),
                                             newParameterizedTypeCode);
+                        }
+
+                        if (isArrayParameterizedType(returnTypeName)) {
+                            ArrayTypeName arrayTypeName = (ArrayTypeName) returnTypeName;
+                            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) arrayTypeName.componentType;
+                            String newParameterizedTypeCode = buildNewParameterizedTypeCode(parameterizedTypeName);
+                            methodBuilder
+                                    .addStatement("$T converter = mConverterFactory.toType($L)",
+                                            ParameterizedTypeName.get(ClassName.get(Converter.class),
+                                                    ClassName.get(String.class),
+                                                    returnTypeName),
+                                            GenericArrayTypeTemplate.build(newParameterizedTypeCode));
                         }
                     }
                     methodBuilder
@@ -425,17 +453,50 @@ public class PreferenceGenerator extends ElementGenerator {
             return paramTypeName instanceof ClassName;
         }
 
+        private boolean isArrayRawType(TypeName paramTypeName) {
+            if (paramTypeName instanceof ArrayTypeName) {
+                TypeName componentType = ((ArrayTypeName) paramTypeName).componentType;
+                return componentType.getClass() == TypeName.class || isRawType(componentType);
+            }
+            return false;
+        }
+
+        private boolean isArrayParameterizedType(TypeName paramTypeName) {
+            if (paramTypeName instanceof ArrayTypeName) {
+                TypeName componentType = ((ArrayTypeName) paramTypeName).componentType;
+                return isParameterizedType(componentType);
+            }
+            return false;
+        }
+
         private boolean isParameterizedType(TypeName paramTypeName) {
             return paramTypeName instanceof ParameterizedTypeName;
         }
 
         private void checkParamType(TypeName param) {
+            System.out.println("..................." + param.getClass());
             if (param.getClass() == TypeName.class ||
                     isRawType(param) ||
-                    isParameterizedType(param)) {
+                    isParameterizedType(param) ||
+                    isArrayRawType(param) ||
+                    isArrayParameterizedType(param)) {
                 return;
             }
             throw new NotSupportTypeException("Treasure not support type: " + param.toString());
+        }
+    }
+
+    static class GenericArrayTypeTemplate {
+        static String TYPE = "{type}";
+        static String TEMPLATE = "new java.lang.reflect.GenericArrayType() {\n" +
+                "        @Override\n" +
+                "        public java.lang.reflect.Type getGenericComponentType() {\n" +
+                "            return " + TYPE + ";\n" +
+                "        }\n" +
+                "    }";
+
+        static String build(CharSequence type) {
+            return TEMPLATE.replace(TYPE, type);
         }
     }
 
