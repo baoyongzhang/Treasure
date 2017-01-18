@@ -13,8 +13,8 @@
 #### Gradle
 
 ``` groovy
-compile 'com.baoyz.treasure:treasure:0.7.3'
-annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.3'
+compile 'com.baoyz.treasure:treasure:0.7.4'
+annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.4'
 ```
 
 #### Gradle Plugin
@@ -25,7 +25,7 @@ annotationProcessor 'com.baoyz.treasure:treasure-compiler:0.7.3'
 
 ``` groovy
 dependencies {
-    classpath 'com.baoyz.treasure:treasure-gradle:0.7.3'
+    classpath 'com.baoyz.treasure:treasure-gradle:0.7.4'
 }
 ```
 
