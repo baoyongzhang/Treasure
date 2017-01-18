@@ -474,7 +474,6 @@ public class PreferenceGenerator extends ElementGenerator {
         }
 
         private void checkParamType(TypeName param) {
-            System.out.println("..................." + param.getClass());
             if (param.getClass() == TypeName.class ||
                     isRawType(param) ||
                     isParameterizedType(param) ||
