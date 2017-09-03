@@ -32,7 +32,7 @@ import java.util.Set;
  * Created by baoyz on 15/11/14.
  */
 @Preferences
-public interface SimplePreferences {
+public interface SimplePreferences extends BasePreferences {
 
     @Default("Hello Treasure!")
     String getUsername();

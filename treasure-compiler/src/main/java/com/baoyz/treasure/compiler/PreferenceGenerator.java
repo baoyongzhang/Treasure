@@ -54,6 +54,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 import static javax.lang.model.type.TypeKind.BOOLEAN;
@@ -66,6 +67,8 @@ public class PreferenceGenerator extends ElementGenerator {
 
     KeyConverter mKeyConverter = new SimpleKeyConverter();
     ValueConverter mValueConverter = new SimpleValueConverter();
+    private String mDefaultEditMethod;
+    private List<PreferenceMethod> mPreferenceMethods;
 
     public PreferenceGenerator(Filer filer) {
         super(filer);
@@ -87,36 +90,19 @@ public class PreferenceGenerator extends ElementGenerator {
                 .addModifiers(Modifier.PUBLIC)
                 .addJavadoc("Generated code from Treasure. Do not modify!");
 
-        String defaultEditMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
+        mDefaultEditMethod = edit == Preferences.Edit.APPLY ? "apply" : "commit";
 
-        List<PreferenceMethod> preferenceMethods = new ArrayList<>();
+        mPreferenceMethods = new ArrayList<>();
 
         boolean supportExpired = false;
 
         // implements
-        List<? extends Element> enclosedElements = element.getEnclosedElements();
-        for (Element e : enclosedElements) {
-            if (e instanceof ExecutableElement) {
+        processPreferenceMethods(element);
 
-                ExecutableElement methodElement = (ExecutableElement) e;
-
-                String methodName = methodElement.getSimpleName().toString();
-
-                if (methodName.equals("<init>")) {
-                    // interface not has constructor(<init>), class/abstract class has <init>
-                    continue;
-                }
-
-                PreferenceMethod preferenceMethod = new PreferenceMethod(methodElement, defaultEditMethod);
-                preferenceMethods.add(preferenceMethod);
-
-            }
-        }
-
-        for (PreferenceMethod method1 : preferenceMethods) {
+        for (PreferenceMethod method1 : mPreferenceMethods) {
             if (method1.mSupportExpiration) {
                 supportExpired = true;
-                for (PreferenceMethod method2 : preferenceMethods) {
+                for (PreferenceMethod method2 : mPreferenceMethods) {
                     if (method1.mKey != null && method1.mKey.equals(method2.mKey)) {
                         method2.mSupportExpiration = true;
                         method2.mExpiredTime = method1.mExpiredTime;
@@ -148,11 +134,43 @@ public class PreferenceGenerator extends ElementGenerator {
         builder.addMethod(constructor.build());
         builder.addMethod(constructor2);
 
-        for (PreferenceMethod method : preferenceMethods) {
+        for (PreferenceMethod method : mPreferenceMethods) {
             builder.addMethod(method.build());
         }
 
         return builder.build();
+    }
+
+    private void processPreferenceMethods(TypeElement element) {
+        List<? extends Element> enclosedElements = element.getEnclosedElements();
+        for (Element e : enclosedElements) {
+            if (e instanceof ExecutableElement) {
+
+                ExecutableElement methodElement = (ExecutableElement) e;
+
+                String methodName = methodElement.getSimpleName().toString();
+
+                if (methodName.equals("<init>")) {
+                    // interface not has constructor(<init>), class/abstract class has <init>
+                    continue;
+                }
+
+                PreferenceMethod preferenceMethod = new PreferenceMethod(methodElement, mDefaultEditMethod);
+                mPreferenceMethods.add(preferenceMethod);
+
+            }
+        }
+
+        List<? extends TypeMirror> interfaces = element.getInterfaces();
+        for (TypeMirror anInterface : interfaces) {
+            if (anInterface instanceof DeclaredType) {
+                DeclaredType declaredType = (DeclaredType) anInterface;
+                Element asElement = declaredType.asElement();
+                if (asElement instanceof TypeElement) {
+                    processPreferenceMethods((TypeElement) asElement);
+                }
+            }
+        }
     }
 
     class PreferenceMethod {
