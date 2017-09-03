@@ -36,9 +36,23 @@ public class SimpleKeyConverter implements KeyConverter {
         if (key != null && key.startsWith("is")) {
             return key.substring(2).toLowerCase();
         }
-        if (key != null && (key.startsWith("remove") || key.startsWith("delete"))){
+        if (key != null && (key.startsWith("remove") || key.startsWith("delete"))) {
             return key.substring(6).toLowerCase();
         }
+
         return key.toLowerCase();
     }
+
+    public boolean hasRemoveKeyword(String key) {
+        return key != null && (key.startsWith("remove") || key.startsWith("delete"));
+    }
+
+    public boolean hasSetterKeyword(String key) {
+        return key != null && (key.startsWith("set") || key.startsWith("put"));
+    }
+
+    public boolean hasGetterKeyword(String key) {
+        return key != null && (key.startsWith("get") || key.startsWith("is"));
+    }
+
 }

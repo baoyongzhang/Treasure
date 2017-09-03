@@ -45,9 +45,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -226,15 +223,17 @@ public class PreferenceGenerator extends ElementGenerator {
                 mKey = key.value();
             }
 
-            if (methodElement.getAnnotation(Remove.class) != null) {
-                mType = TYPE_REMOVE;
-            } else {
+            List<? extends VariableElement> parameters = methodElement.getParameters();
 
-                List<? extends VariableElement> parameters = methodElement.getParameters();
-
-                if (mReturnType.getKind().equals(VOID) || (mReturnType.getKind().equals(BOOLEAN) && parameters != null && parameters.size() > 0)) {
+            if (parameters != null && parameters.size() > 0) {
+                if (mReturnType.getKind().equals(VOID) || mReturnType.getKind().equals(BOOLEAN)) {
                     // setter
                     mType = TYPE_SETTER;
+                }
+            } else {
+                if (methodElement.getAnnotation(Remove.class) != null
+                        || mKeyConverter.hasRemoveKeyword(mMethodName)) {
+                    mType = TYPE_REMOVE;
                 } else {
                     // getter
                     mType = TYPE_GETTER;

@@ -33,5 +33,6 @@ public class PrototypeTest extends ApplicationTestCase<Application> {
         assertNull(sharedPreferences.getString("username", null));
         SystemClock.sleep(1000);
         assertTrue(changed);
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(mListener);
     }
 }

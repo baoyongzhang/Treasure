@@ -29,4 +29,8 @@ package com.baoyz.treasure.compiler.conveter;
 public interface KeyConverter {
 
     String convert(String key);
+    boolean hasRemoveKeyword(String key);
+    boolean hasSetterKeyword(String key);
+    boolean hasGetterKeyword(String key);
+
 }

@@ -62,10 +62,12 @@ public interface SimplePreferences {
     boolean setStringSet(Set<String> stringSet);
 
     @Commit
-    @Remove
     void removeUsername();
 
+    @Key("username")
     @Remove
+    void delUsername();
+
     boolean deleteTimeout();
 
     @Clear
