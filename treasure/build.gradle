@@ -5,7 +5,7 @@ configurations {
     provided
 }
 
-sourceSets.main.compileClasspath += [configurations.provided]
+sourceSets.main.compileClasspath += configurations.provided
 
 idea {
     module{
